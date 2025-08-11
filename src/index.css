@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-pale text-gray-900 font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-deepTeal text-white font-medium transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-deepTeal focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl border-2 border-primary text-primary bg-white font-medium transition hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition transform hover:-translate-y-1;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent transition;
+  }
+  
+  .badge-pending {
+    @apply inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700;
+  }
+  
+  .badge-progress {
+    @apply inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700;
+  }
+  
+  .badge-resolved {
+    @apply inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-success-100 text-success-700;
+  }
+
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2;
+  }
+
+  .progress-fill {
+    @apply bg-deepTeal h-2 rounded-full transition-all duration-300;
+  }
+
+  .wizard-step {
+    @apply flex items-center space-x-2 text-sm font-medium;
+  }
+
+  .wizard-step.active {
+    @apply text-deepTeal;
+  }
+
+  .wizard-step.completed {
+    @apply text-success-600;
+  }
+}
