@@ -7,6 +7,9 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ReportsPage from './pages/ReportsPage';
+import ReportDetailsPage from './pages/ReportDetailsPage';
+import ReportNewPage from './pages/ReportNewPage';
 
 // Start MirageJS server in development
 if (import.meta.env.DEV) {
@@ -97,22 +100,17 @@ const AppRoutes: React.FC = () => {
       } />
       <Route path="/reports" element={
         <ProtectedRoute>
-          <div className="min-h-screen bg-pale flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Reports Page Coming Soon</h1>
-              <p className="text-gray-600">Community reports listing is being developed.</p>
-            </div>
-          </div>
+          <ReportsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/reports/:id" element={
+        <ProtectedRoute>
+          <ReportDetailsPage />
         </ProtectedRoute>
       } />
       <Route path="/report" element={
         <ProtectedRoute>
-          <div className="min-h-screen bg-pale flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Report Issue Coming Soon</h1>
-              <p className="text-gray-600">Issue reporting form is being developed.</p>
-            </div>
-          </div>
+          <ReportNewPage />
         </ProtectedRoute>
       } />
       <Route path="/contact" element={
