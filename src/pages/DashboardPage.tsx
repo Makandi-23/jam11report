@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Plus, TrendingUp, Clock, CheckCircle, AlertTriangle, User, Edit, Camera } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { useVote } from '../hooks/useVote';
@@ -33,6 +33,7 @@ const DashboardPage: React.FC = () => {
   const [urgentIssues, setUrgentIssues] = useState<Report[]>([]);
   const [recentReports, setRecentReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -130,10 +131,76 @@ const DashboardPage: React.FC = () => {
       
       <main className="pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Profile Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl p-6 shadow-md mb-8"
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              {/* Left Side - Profile Info */}
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <img
+                    src={user?.avatar || 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'}
+                    alt={user?.name}
+                    className="w-16 h-16 rounded-full object-cover border-4 border-primary/20"
+                  />
+                  <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-deepTeal text-white rounded-full flex items-center justify-center hover:bg-deepTeal/90 transition">
+                    <Camera className="w-3 h-3" />
+                  </button>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{user?.name}</h2>
+                  <p className="text-gray-600">{user?.ward} Ward</p>
+                  <p className="text-sm text-gray-500">Member since January 2025</p>
+                </div>
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="px-4 py-2 border-2 border-deepTeal text-deepTeal rounded-lg hover:bg-deepTeal hover:text-white transition font-medium"
+                >
+                  <Edit className="w-4 h-4 inline mr-2" />
+                  Edit Profile
+                </button>
+              </div>
+
+              {/* Right Side - Activity Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-center p-4 bg-gray-50 rounded-lg"
+                >
+                  <div className="text-2xl font-bold text-deepTeal">3</div>
+                  <div className="text-sm text-gray-600">Reports Submitted</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-center p-4 bg-gray-50 rounded-lg"
+                >
+                  <div className="text-2xl font-bold text-deepTeal">12</div>
+                  <div className="text-sm text-gray-600">Votes Cast</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-center p-4 bg-gray-50 rounded-lg"
+                >
+                  <div className="text-2xl font-bold text-deepTeal">2</div>
+                  <div className="text-sm text-gray-600">Issues Resolved</div>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
           {/* Greeting */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
             className="mb-8"
           >
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -145,7 +212,7 @@ const DashboardPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.5 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
           >
             <div className="card">
@@ -190,7 +257,7 @@ const DashboardPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.6 }}
               className="card"
             >
               <div className="flex items-center justify-between mb-6">
@@ -250,7 +317,7 @@ const DashboardPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.7 }}
               className="card"
             >
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Reports in {user?.ward}</h2>
@@ -293,7 +360,7 @@ const DashboardPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.8 }}
             className="card mt-8"
           >
             <div className="flex items-center justify-between">
@@ -321,6 +388,63 @@ const DashboardPage: React.FC = () => {
         </div>
       </main>
 
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 w-full max-w-md"
+          >
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Edit Profile</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  defaultValue={user?.name}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-deepTeal focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <input
+                  type="tel"
+                  defaultValue={user?.phone}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-deepTeal focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ward</label>
+                <select
+                  defaultValue={user?.ward}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-deepTeal focus:border-transparent"
+                >
+                  <option value="Lindi">Lindi</option>
+                  <option value="Laini Saba">Laini Saba</option>
+                  <option value="Makina">Makina</option>
+                  <option value="Woodley/Kenyatta Golf Course">Woodley/Kenyatta Golf Course</option>
+                  <option value="Sarang'ombe">Sarang'ombe</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 bg-deepTeal text-white rounded-lg hover:bg-deepTeal/90 transition"
+              >
+                Save Changes
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
       {/* Floating Action Button */}
       <Link
         to="/report"

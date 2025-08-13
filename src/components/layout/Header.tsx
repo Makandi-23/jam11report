@@ -21,8 +21,9 @@ const Header: React.FC = () => {
 
   const navItems = user ? [
     { to: user.role === 'admin' ? '/admin' : '/dashboard', label: t('nav.dashboard'), icon: Home },
+    ...(user.role === 'resident' ? [{ to: '/profile', label: 'Profile', icon: User }] : []),
     { to: '/reports', label: t('nav.reports'), icon: FileText },
-    { to: '/report', label: t('nav.reportIssue'), icon: Plus },
+    ...(user.role === 'resident' ? [{ to: '/report', label: t('nav.reportIssue'), icon: Plus }] : []),
     { to: '/contact', label: t('nav.contact'), icon: Phone },
   ] : [
     { to: '/login', label: t('nav.login'), icon: User },
