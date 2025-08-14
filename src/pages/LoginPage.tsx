@@ -24,9 +24,9 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(email, password);
-      // Navigation will be handled by the auth context and route protection
+      // Navigation is handled by route protection based on user role
     } catch (err) {
-      setError('Invalid email or password');
+      setError('Invalid credentials. Please check your email and password.');
     } finally {
       setIsLoading(false);
     }
@@ -206,8 +206,8 @@ const LoginPage: React.FC = () => {
           <div className="mt-8 p-4 bg-gray-50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h4>
             <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Resident:</strong> amina@example.com / pass123</p>
-              <p><strong>Admin:</strong> admin@example.com / admin123</p>
+              <p><strong>Resident:</strong> resident@test.com / 123456</p>
+              <p><strong>Admin:</strong> admin@test.com / 123456</p>
             </div>
           </div>
         </motion.div>
