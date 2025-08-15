@@ -477,7 +477,7 @@ const AdminUrgentPage: React.FC = () => {
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
           </button>
-        </motion.div> {/* ✅ fixed closing tag */}
+        </motion.div> /* ✅ fixed closing tag */
       )}
     </div>
   );
