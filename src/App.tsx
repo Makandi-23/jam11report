@@ -9,6 +9,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminReportsPage from './pages/AdminReportsPage';
+import AdminUrgentPage from './pages/AdminUrgentPage';
 import ProfilePage from './pages/ProfilePage';
 import ReportsPage from './pages/ReportsPage';
 import ReportDetailsPage from './pages/ReportDetailsPage';
@@ -102,18 +104,8 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       }>
         <Route index element={<AdminDashboardPage />} />
-        <Route path="reports" element={
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Reports</h2>
-            <p className="text-gray-600">Advanced report management coming soon.</p>
-          </div>
-        } />
-        <Route path="urgent" element={
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Urgent Issues</h2>
-            <p className="text-gray-600">Urgent issue management coming soon.</p>
-          </div>
-        } />
+        <Route path="reports" element={<AdminReportsPage />} />
+        <Route path="urgent" element={<AdminUrgentPage />} />
         <Route path="map" element={
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Map View</h2>
