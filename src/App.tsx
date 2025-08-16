@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminUrgentPage from './pages/AdminUrgentPage';
+import AdminMapPage from './pages/AdminMapPage';
 import ProfilePage from './pages/ProfilePage';
 import ReportsPage from './pages/ReportsPage';
 import ReportDetailsPage from './pages/ReportDetailsPage';
@@ -118,6 +119,7 @@ const AppRoutes: React.FC = () => {
             <p className="text-gray-600">Advanced analytics coming soon.</p>
           </div>
         } />
+        <Route path="map" element={<AdminMapPage />} />
         <Route path="residents" element={
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Residents</h2>

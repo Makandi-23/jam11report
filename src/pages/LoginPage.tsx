@@ -41,51 +41,142 @@ const LoginPage: React.FC = () => {
 
       {/* Left Side - Image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <motion.img
-          src="https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=1200"
-          alt="Resident submitting report on phone"
-          className="w-full h-full object-cover"
-          animate={{ scale: [1, 1.05, 1] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-deepTeal/80 to-primary/80" />
+        {/* Background Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-deepTeal via-primary to-pale" />
         
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute top-20 left-10 w-4 h-4 bg-white/20 rounded-full"
-            animate={{ y: [0, -20, 0], opacity: [0.3, 0.7, 0.3] }}
-            transition={{ duration: 3, repeat: Infinity, delay: 0 }}
-          />
-          <motion.div
-            className="absolute top-40 right-20 w-6 h-6 bg-white/20 rounded-full"
-            animate={{ y: [0, -30, 0], opacity: [0.2, 0.6, 0.2] }}
-            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-          />
-          <motion.div
-            className="absolute bottom-32 left-20 w-3 h-3 bg-white/20 rounded-full"
-            animate={{ y: [0, -15, 0], opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 2.5, repeat: Infinity, delay: 2 }}
-          />
-        </div>
+        {/* Community Illustration */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute inset-0 flex items-center justify-center p-12"
+        >
+          {/* Main Illustration Container */}
+          <div className="relative w-full max-w-md">
+            {/* Background Neighborhood Elements */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="absolute inset-0"
+            >
+              {/* Buildings */}
+              <div className="absolute top-8 left-4 w-16 h-20 bg-white/10 rounded-t-lg border border-white/20"></div>
+              <div className="absolute top-12 left-24 w-12 h-16 bg-white/10 rounded-t-lg border border-white/20"></div>
+              <div className="absolute top-6 right-8 w-14 h-22 bg-white/10 rounded-t-lg border border-white/20"></div>
+              
+              {/* Trees */}
+              <div className="absolute bottom-20 left-8 w-3 h-8 bg-white/20 rounded-full"></div>
+              <div className="absolute bottom-20 right-12 w-3 h-8 bg-white/20 rounded-full"></div>
+              
+              {/* Street Light */}
+              <div className="absolute bottom-16 left-32 w-1 h-12 bg-white/30"></div>
+              <div className="absolute bottom-28 left-30 w-4 h-2 bg-white/20 rounded-full"></div>
+            </motion.div>
+
+            {/* Main Character - Resident with Phone */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="relative z-10 flex flex-col items-center"
+            >
+              {/* Person */}
+              <div className="relative">
+                {/* Head */}
+                <div className="w-16 h-16 bg-white/90 rounded-full mb-2 border-2 border-deepTeal/30"></div>
+                
+                {/* Body */}
+                <div className="w-20 h-24 bg-white/80 rounded-2xl relative border border-white/40">
+                  {/* Deep Teal Shirt Accent */}
+                  <div className="absolute top-2 left-2 right-2 h-4 bg-deepTeal/60 rounded-lg"></div>
+                  
+                  {/* Arms */}
+                  <div className="absolute -left-3 top-4 w-6 h-16 bg-white/70 rounded-full transform -rotate-12"></div>
+                  <div className="absolute -right-3 top-4 w-6 h-16 bg-white/70 rounded-full transform rotate-12"></div>
+                </div>
+                
+                {/* Phone in Hand */}
+                <motion.div
+                  animate={{ rotate: [0, -2, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -right-8 top-20 w-8 h-12 bg-deepTeal rounded-lg border-2 border-white/40"
+                >
+                  {/* Phone Screen */}
+                  <div className="w-6 h-8 bg-white/90 rounded m-1 relative">
+                    <div className="w-4 h-1 bg-deepTeal/40 rounded mx-auto mt-1"></div>
+                    <div className="w-5 h-3 bg-deepTeal/20 rounded mx-auto mt-1"></div>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Floating Category Icons */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
+              className="absolute inset-0"
+            >
+              {/* Security Icon */}
+              <motion.div
+                animate={{ y: [0, -8, 0], rotate: [0, 5, 0] }}
+                transition={{ duration: 3, repeat: Infinity, delay: 0 }}
+                className="absolute top-16 right-4 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg border border-white/30"
+              >
+                🛡️
+              </motion.div>
+              
+              {/* Environment Icon */}
+              <motion.div
+                animate={{ y: [0, -6, 0], rotate: [0, -3, 0] }}
+                transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+                className="absolute top-32 left-2 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg border border-white/30"
+              >
+                🌿
+              </motion.div>
+              
+              {/* Health Icon */}
+              <motion.div
+                animate={{ y: [0, -10, 0], rotate: [0, 4, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, delay: 2 }}
+                className="absolute bottom-24 right-16 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg border border-white/30"
+              >
+                ➕
+              </motion.div>
+            </motion.div>
+
+            {/* Connecting Lines/Signals */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.6, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+              className="absolute inset-0"
+            >
+              <div className="absolute top-24 right-12 w-16 h-0.5 bg-white/30 transform rotate-45"></div>
+              <div className="absolute top-40 left-12 w-12 h-0.5 bg-white/30 transform -rotate-45"></div>
+              <div className="absolute bottom-32 right-24 w-14 h-0.5 bg-white/30 transform rotate-12"></div>
+            </motion.div>
+          </div>
+        </motion.div>
         
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white px-8">
             <motion.h1
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-4xl font-bold mb-4"
+              transition={{ duration: 0.8, delay: 1 }}
+              className="text-4xl font-bold mb-4 relative z-20"
             >
-              Welcome Back
+              Empowering Communities
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-xl opacity-90"
+              transition={{ duration: 0.8, delay: 1.2 }}
+              className="text-xl opacity-90 relative z-20"
             >
-              Continue reporting and improving your community
+              Report issues, track progress, and build a better neighborhood together
             </motion.p>
           </div>
         </div>
