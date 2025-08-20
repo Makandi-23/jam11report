@@ -12,6 +12,9 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminUrgentPage from './pages/AdminUrgentPage';
 import AdminMapPage from './pages/AdminMapPage';
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
+import AdminResidentsPage from './pages/AdminResidentsPage';
+import AdminSettingsPage from './pages/AdminSettingsPage';
 import ProfilePage from './pages/ProfilePage';
 import ReportsPage from './pages/ReportsPage';
 import ReportDetailsPage from './pages/ReportDetailsPage';
@@ -114,23 +117,14 @@ const AppRoutes: React.FC = () => {
           </div>
         } />
         <Route path="analytics" element={
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Analytics</h2>
-            <p className="text-gray-600">Advanced analytics coming soon.</p>
-          </div>
+          <AdminAnalyticsPage />
         } />
         <Route path="map" element={<AdminMapPage />} />
         <Route path="residents" element={
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Residents</h2>
-            <p className="text-gray-600">Resident management coming soon.</p>
-          </div>
+          <AdminResidentsPage />
         } />
         <Route path="settings" element={
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Settings</h2>
-            <p className="text-gray-600">Admin settings coming soon.</p>
-          </div>
+          <AdminSettingsPage />
         } />
       </Route>
       <Route path="/reports" element={
