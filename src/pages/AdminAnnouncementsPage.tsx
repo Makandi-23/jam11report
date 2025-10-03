@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Archive, Pin, Calendar, AlertCircle, Info } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Archive, Pin, Calendar, AlertCircle, Info } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
 import { createClient } from '@supabase/supabase-js';
 
