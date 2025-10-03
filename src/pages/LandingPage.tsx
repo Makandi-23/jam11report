@@ -263,7 +263,7 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <Footer />
+      <Footer variant="landing" />
     </div>
   );
 };

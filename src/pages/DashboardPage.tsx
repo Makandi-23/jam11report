@@ -7,6 +7,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { useVote } from '../hooks/useVote';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import AnnouncementsWidget from '../components/dashboard/AnnouncementsWidget';
 
 interface Report {
   id: number;
@@ -252,6 +253,10 @@ const DashboardPage: React.FC = () => {
             </div>
           </motion.div>
 
+          <div className="grid lg:grid-cols-2 gap-8 mb-8">
+            <AnnouncementsWidget />
+          </div>
+
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Top Urgent Issues */}
             <motion.div
@@ -453,7 +458,7 @@ const DashboardPage: React.FC = () => {
         <Plus className="w-6 h-6" />
       </Link>
 
-      <Footer />
+      <Footer variant="dashboard" />
     </div>
   );
 };

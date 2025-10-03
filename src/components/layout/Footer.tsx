@@ -1,95 +1,224 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Flag, Mail, Phone, MapPin, Facebook, Twitter, Instagram, HelpCircle } from 'lucide-react';
+import { useI18n } from '../../contexts/I18nContext';
 
-const Footer: React.FC = () => {
-  return (
-    <footer className="bg-pale border-t border-gray-200 mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* About & Contact */}
-          <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">J</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                Jamii<span className="text-primary">report</span>
+interface FooterProps {
+  variant: 'landing' | 'dashboard';
+}
+
+const Footer: React.FC<FooterProps> = ({ variant }) => {
+  const { language } = useI18n();
+
+  if (variant === 'dashboard') {
+    return (
+      <footer className="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <span>© 2025 JamiiReport.</span>
+              <span className="hidden md:inline">
+                {language === 'en' ? 'All rights reserved.' : 'Haki zote zimehifadhiwa.'}
               </span>
             </div>
-            <p className="text-gray-600 mb-4">
-              Empowering communities to report issues, track progress, and work together for a better neighborhood.
+            <Link
+              to="/help"
+              className="flex items-center gap-1 text-teal-600 hover:text-teal-700 transition-colors font-medium"
+            >
+              <HelpCircle className="h-4 w-4" />
+              {language === 'en' ? 'Help Center' : 'Kituo cha Msaada'}
+            </Link>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  return (
+    <footer className="bg-gray-900 text-gray-300 pt-12 pb-6">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl flex items-center justify-center">
+                <Flag className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xl font-bold text-white">JamiiReport</span>
+            </div>
+            <p className="text-sm leading-relaxed">
+              {language === 'en'
+                ? 'Empowering communities to report, track, and resolve local issues together. Building better neighborhoods through civic engagement.'
+                : 'Kuwapa nguvu jamii kuripoti, kufuatilia, na kutatua masuala ya kijiamii pamoja. Kujenga mitaa bora kupitia ushiriki wa raia.'}
             </p>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Mail className="w-4 h-4" />
-                <span>info@jamiireport.com</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Phone className="w-4 h-4" />
-                <span>+254 700 123 456</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span>Nairobi, Kenya</span>
-              </div>
+            <div className="flex gap-3">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-teal-600 transition-all duration-300 group"
+                aria-label="Facebook"
+              >
+                <Facebook className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-teal-600 transition-all duration-300 group"
+                aria-label="Twitter"
+              >
+                <Twitter className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-teal-600 transition-all duration-300 group"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              </a>
             </div>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
-            <div className="space-y-2">
-              <Link to="/about" className="block text-gray-600 hover:text-primary transition">
-                About Us
-              </Link>
-              <Link to="/how-it-works" className="block text-gray-600 hover:text-primary transition">
-                How It Works
-              </Link>
-              <Link to="/faq" className="block text-gray-600 hover:text-primary transition">
-                FAQ
-              </Link>
-              <Link to="/privacy" className="block text-gray-600 hover:text-primary transition">
-                Privacy Policy
-              </Link>
-              <Link to="/terms" className="block text-gray-600 hover:text-primary transition">
-                Terms of Service
-              </Link>
-            </div>
+            <h3 className="text-white font-semibold mb-4 text-lg">
+              {language === 'en' ? 'Quick Links' : 'Viungo vya Haraka'}
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/about"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'About Us' : 'Kuhusu Sisi'}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/how-it-works"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'How It Works' : 'Jinsi Inavyofanya Kazi'}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'Contact' : 'Mawasiliano'}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/faq"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'FAQ' : 'Maswali'}
+                </Link>
+              </li>
+            </ul>
           </div>
 
-          {/* Social & Newsletter */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Stay Connected</h3>
-            <div className="flex space-x-4 mb-6">
-              <a href="#" className="text-gray-600 hover:text-primary transition">
-                <Facebook className="w-6 h-6" />
-              </a>
-              <a href="#" className="text-gray-600 hover:text-primary transition">
-                <Twitter className="w-6 h-6" />
-              </a>
-              <a href="#" className="text-gray-600 hover:text-primary transition">
-                <Instagram className="w-6 h-6" />
-              </a>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Newsletter</h4>
-              <div className="flex">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <button className="px-4 py-2 bg-primary text-white rounded-r-lg hover:bg-primary/90 transition">
-                  Subscribe
-                </button>
-              </div>
-            </div>
+            <h3 className="text-white font-semibold mb-4 text-lg">
+              {language === 'en' ? 'Legal' : 'Kisheria'}
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/privacy"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'Privacy Policy' : 'Sera ya Faragha'}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/terms"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'Terms of Service' : 'Masharti ya Huduma'}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/cookies"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'Cookie Policy' : 'Sera ya Vidakuzi'}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/accessibility"
+                  className="text-sm hover:text-teal-400 transition-colors inline-block hover:translate-x-1 duration-200"
+                >
+                  {language === 'en' ? 'Accessibility' : 'Upatikanaji'}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-white font-semibold mb-4 text-lg">
+              {language === 'en' ? 'Contact Info' : 'Taarifa za Mawasiliano'}
+            </h3>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2">
+                <MapPin className="h-5 w-5 text-teal-400 flex-shrink-0 mt-0.5" />
+                <span className="text-sm">
+                  {language === 'en'
+                    ? 'Mombasa County Office, Kilindini Road'
+                    : 'Ofisi ya Kaunti ya Mombasa, Barabara ya Kilindini'}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Phone className="h-5 w-5 text-teal-400 flex-shrink-0 mt-0.5" />
+                <a
+                  href="tel:+254700123456"
+                  className="text-sm hover:text-teal-400 transition-colors"
+                >
+                  +254 700 123 456
+                </a>
+              </li>
+              <li className="flex items-start gap-2">
+                <Mail className="h-5 w-5 text-teal-400 flex-shrink-0 mt-0.5" />
+                <a
+                  href="mailto:support@jamiireport.co.ke"
+                  className="text-sm hover:text-teal-400 transition-colors"
+                >
+                  support@jamiireport.co.ke
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-200 mt-8 pt-8 text-center text-gray-600">
-          <p>&copy; 2025 Jamiireport. All rights reserved.</p>
+        <div className="border-t border-gray-800 pt-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-center md:text-left">
+              © 2025 JamiiReport.{' '}
+              {language === 'en' ? 'All rights reserved.' : 'Haki zote zimehifadhiwa.'}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
+              <button className="hover:text-teal-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded px-2 py-1">
+                {language === 'en' ? 'Cookie Preferences' : 'Mapendeleo ya Vidakuzi'}
+              </button>
+              <span className="text-gray-600">|</span>
+              <button className="hover:text-teal-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded px-2 py-1">
+                {language === 'en' ? 'Report a Bug' : 'Ripoti Hitilafu'}
+              </button>
+              <span className="text-gray-600">|</span>
+              <Link
+                to="/sitemap"
+                className="hover:text-teal-400 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded px-2 py-1"
+              >
+                {language === 'en' ? 'Sitemap' : 'Ramani ya Tovuti'}
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

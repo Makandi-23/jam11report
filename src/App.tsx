@@ -19,6 +19,9 @@ import ProfilePage from './pages/ProfilePage';
 import ReportsPage from './pages/ReportsPage';
 import ReportDetailsPage from './pages/ReportDetailsPage';
 import ReportNewPage from './pages/ReportNewPage';
+import ContactPage from './pages/ContactPage';
+import AnnouncementsPage from './pages/AnnouncementsPage';
+import AdminAnnouncementsPage from './pages/AdminAnnouncementsPage';
 
 // Start MirageJS server in development
 if (import.meta.env.DEV) {
@@ -126,6 +129,9 @@ const AppRoutes: React.FC = () => {
         <Route path="settings" element={
           <AdminSettingsPage />
         } />
+        <Route path="announcements" element={
+          <AdminAnnouncementsPage />
+        } />
       </Route>
       <Route path="/reports" element={
         <ProtectedRoute>
@@ -143,12 +149,14 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
       <Route path="/contact" element={
-        <div className="min-h-screen bg-pale flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Contact Page Coming Soon</h1>
-            <p className="text-gray-600">Contact information and form coming soon.</p>
-          </div>
-        </div>
+        <ProtectedRoute>
+          <ContactPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/announcements" element={
+        <ProtectedRoute>
+          <AnnouncementsPage />
+        </ProtectedRoute>
       } />
       <Route path="*" element={
         <div className="min-h-screen bg-pale flex items-center justify-center">
