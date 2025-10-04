@@ -23,7 +23,7 @@ const AdminLayout: React.FC = () => {
     { to: '/admin/reports', label: 'Reports', icon: FileText },
     { to: '/admin/urgent', label: 'Urgent Issues', icon: AlertTriangle },
     { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
-    { to: '/admin/map', label: 'Map View', icon: Map },
+    { to: '/admin/map', label: 'Ward Insights', icon: Map },
     { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { to: '/admin/residents', label: 'Residents', icon: Users },
     { to: '/admin/settings', label: 'Settings', icon: Settings },
