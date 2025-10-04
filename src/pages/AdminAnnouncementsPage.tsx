@@ -1,28 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard as Edit, Trash2, Archive, Pin, Calendar, AlertCircle, Info } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
-import { createClient } from '@supabase/supabase-js';
+import {
+  getAnnouncements,
+  createAnnouncementDraft,
+  updateAnnouncement,
+  deleteAnnouncement,
+  archiveAnnouncement,
+  Announcement
+} from '../services/mock/announcements';
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
-
-interface Announcement {
-  id: string;
-  title_en: string;
-  title_sw: string;
-  message_en: string;
-  message_sw: string;
-  category: 'info' | 'warning' | 'urgent' | 'event';
-  ward_target: string;
-  is_pinned: boolean;
-  expires_at: string | null;
-  status: 'active' | 'expired' | 'archived';
-  created_at: string;
-}
-
-const wards = ['All', 'Makongeni', 'Bombolulu', 'Kisauni', 'Changamwe', 'Likoni', 'Nyali'];
+const wards = ['All', 'Lindi', 'Makina', 'Woodley/Kenyatta Golf Course', 'Sarang\'ombe', 'Laini Saba'];
 
 export default function AdminAnnouncementsPage() {
   const { t, language } = useI18n();
@@ -48,14 +36,8 @@ export default function AdminAnnouncementsPage() {
 
   const fetchAnnouncements = async () => {
     try {
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('*')
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAnnouncements(data || []);
+      const data = await getAnnouncements({});
+      setAnnouncements(data);
     } catch (error) {
       console.error('Error fetching announcements:', error);
     } finally {
@@ -70,20 +52,13 @@ export default function AdminAnnouncementsPage() {
       const payload = {
         ...formData,
         expires_at: formData.expires_at || null,
-        status: 'active'
+        status: 'active' as const
       };
 
       if (editingId) {
-        const { error } = await supabase
-          .from('announcements')
-          .update(payload)
-          .eq('id', editingId);
-        if (error) throw error;
+        await updateAnnouncement(editingId, payload);
       } else {
-        const { error } = await supabase
-          .from('announcements')
-          .insert([payload]);
-        if (error) throw error;
+        await createAnnouncementDraft(payload);
       }
 
       resetForm();
@@ -110,11 +85,7 @@ export default function AdminAnnouncementsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('announcements')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+      await deleteAnnouncement(id);
       setConfirmDelete(null);
       fetchAnnouncements();
     } catch (error) {
@@ -124,11 +95,7 @@ export default function AdminAnnouncementsPage() {
 
   const handleArchive = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('announcements')
-        .update({ status: 'archived' })
-        .eq('id', id);
-      if (error) throw error;
+      await archiveAnnouncement(id);
       fetchAnnouncements();
     } catch (error) {
       console.error('Error archiving announcement:', error);

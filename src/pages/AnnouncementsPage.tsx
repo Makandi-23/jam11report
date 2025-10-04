@@ -1,30 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pin, Calendar, AlertCircle, Info, Filter, Megaphone, X, ChevronDown } from 'lucide-react';
+import { Pin, Calendar, AlertCircle, Info, Filter, Megaphone, X } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
-import { createClient } from '@supabase/supabase-js';
+import { getAnnouncements, markAsRead, Announcement } from '../services/mock/announcements';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
-
-interface Announcement {
-  id: string;
-  title_en: string;
-  title_sw: string;
-  message_en: string;
-  message_sw: string;
-  category: 'info' | 'warning' | 'urgent' | 'event';
-  ward_target: string;
-  is_pinned: boolean;
-  expires_at: string | null;
-  created_at: string;
-  isRead?: boolean;
-}
 
 export default function AnnouncementsPage() {
   const { t, language } = useI18n();
@@ -34,7 +15,6 @@ export default function AnnouncementsPage() {
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -48,28 +28,8 @@ export default function AnnouncementsPage() {
 
   const fetchAnnouncements = async () => {
     try {
-      const { data: announcementsData, error: announcementsError } = await supabase
-        .from('announcements')
-        .select('*')
-        .eq('status', 'active')
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (announcementsError) throw announcementsError;
-
-      const { data: readsData } = await supabase
-        .from('announcement_reads')
-        .select('announcement_id')
-        .eq('user_id', user?.id || '');
-
-      const readIds = new Set(readsData?.map(r => r.announcement_id) || []);
-
-      const enrichedData = (announcementsData || []).map(a => ({
-        ...a,
-        isRead: readIds.has(a.id)
-      }));
-
-      setAnnouncements(enrichedData);
+      const data = await getAnnouncements({ status: 'active' });
+      setAnnouncements(data);
     } catch (error) {
       console.error('Error fetching announcements:', error);
     } finally {
@@ -92,12 +52,9 @@ export default function AnnouncementsPage() {
     setCurrentPage(1);
   };
 
-  const markAsRead = async (announcementId: string) => {
+  const handleMarkAsRead = async (announcementId: string) => {
     try {
-      await supabase
-        .from('announcement_reads')
-        .insert([{ announcement_id: announcementId, user_id: user?.id }]);
-
+      await markAsRead(announcementId, user?.id || 'guest');
       setAnnouncements(prev =>
         prev.map(a => a.id === announcementId ? { ...a, isRead: true } : a)
       );
@@ -312,7 +269,7 @@ export default function AnnouncementsPage() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            onClick={() => !announcement.isRead && markAsRead(announcement.id)}
+                            onClick={() => !announcement.isRead && handleMarkAsRead(announcement.id)}
                             className={`group relative bg-white rounded-2xl shadow-md border-2 transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl ${
                               announcement.is_pinned
                                 ? 'border-yellow-400 shadow-yellow-200/50 hover:shadow-yellow-300/50'

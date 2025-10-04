@@ -3,24 +3,7 @@ import { Link } from 'react-router-dom';
 import { Pin, Calendar, AlertCircle, Info, ChevronRight } from 'lucide-react';
 import { useI18n } from '../../contexts/I18nContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
-
-interface Announcement {
-  id: string;
-  title_en: string;
-  title_sw: string;
-  message_en: string;
-  message_sw: string;
-  category: 'info' | 'warning' | 'urgent' | 'event';
-  is_pinned: boolean;
-  created_at: string;
-  isRead?: boolean;
-}
+import { getAnnouncements, markAsRead, Announcement } from '../../services/mock/announcements';
 
 export default function AnnouncementsWidget() {
   const { t, language } = useI18n();
@@ -34,29 +17,8 @@ export default function AnnouncementsWidget() {
 
   const fetchAnnouncements = async () => {
     try {
-      const { data: announcementsData, error: announcementsError } = await supabase
-        .from('announcements')
-        .select('*')
-        .eq('status', 'active')
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (announcementsError) throw announcementsError;
-
-      const { data: readsData } = await supabase
-        .from('announcement_reads')
-        .select('announcement_id')
-        .eq('user_id', user?.id || '');
-
-      const readIds = new Set(readsData?.map(r => r.announcement_id) || []);
-
-      const enrichedData = (announcementsData || []).map(a => ({
-        ...a,
-        isRead: readIds.has(a.id)
-      }));
-
-      setAnnouncements(enrichedData);
+      const data = await getAnnouncements({ status: 'active', limit: 3 });
+      setAnnouncements(data);
     } catch (error) {
       console.error('Error fetching announcements:', error);
     } finally {
@@ -64,12 +26,9 @@ export default function AnnouncementsWidget() {
     }
   };
 
-  const markAsRead = async (announcementId: string) => {
+  const handleMarkAsRead = async (announcementId: string) => {
     try {
-      await supabase
-        .from('announcement_reads')
-        .insert([{ announcement_id: announcementId, user_id: user?.id }]);
-
+      await markAsRead(announcementId, user?.id || 'guest');
       setAnnouncements(prev =>
         prev.map(a => a.id === announcementId ? { ...a, isRead: true } : a)
       );
@@ -138,7 +97,7 @@ export default function AnnouncementsWidget() {
           {announcements.map((announcement) => (
             <div
               key={announcement.id}
-              onClick={() => !announcement.isRead && markAsRead(announcement.id)}
+              onClick={() => !announcement.isRead && handleMarkAsRead(announcement.id)}
               className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-md ${
                 announcement.is_pinned ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
               } ${!announcement.isRead ? 'bg-teal-50' : 'bg-white'}`}
