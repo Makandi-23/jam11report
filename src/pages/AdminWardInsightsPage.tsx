@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Search, Calendar, Filter, Download, FileImage, FileText,
+  Search, Filter, FileImage, FileText,
   ArrowUpDown, TrendingUp, AlertTriangle, CheckCircle, X
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useI18n } from '../contexts/I18nContext';
-import { createClient } from '@supabase/supabase-js';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 interface WardData {
   ward: string;
@@ -25,7 +19,11 @@ interface WardData {
 }
 
 const WARD_COLORS = [
-  '#0d9488', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1'
+  '#0d9488',
+  '#EAB308',
+  '#3B82F6',
+  '#10B981',
+  '#374151'
 ];
 
 export default function AdminWardInsightsPage() {
@@ -51,31 +49,51 @@ export default function AdminWardInsightsPage() {
 
   const fetchWardData = async () => {
     try {
-      const wards = ['Makongeni', 'Bombolulu', 'Kisauni', 'Changamwe', 'Likoni', 'Nyali'];
-      const data: WardData[] = [];
+      const wardsData: WardData[] = [
+        {
+          ward: 'Laini Saba',
+          total: 187,
+          active: 45,
+          resolved: 128,
+          urgent: 14,
+          heatIndex: 'high'
+        },
+        {
+          ward: 'Makina',
+          total: 165,
+          active: 52,
+          resolved: 98,
+          urgent: 15,
+          heatIndex: 'high'
+        },
+        {
+          ward: 'Lindi',
+          total: 124,
+          active: 38,
+          resolved: 78,
+          urgent: 8,
+          heatIndex: 'medium'
+        },
+        {
+          ward: 'Sarang\'ombe',
+          total: 98,
+          active: 22,
+          resolved: 68,
+          urgent: 8,
+          heatIndex: 'medium'
+        },
+        {
+          ward: 'Woodley/Kenyatta Golf Course',
+          total: 76,
+          active: 18,
+          resolved: 54,
+          urgent: 4,
+          heatIndex: 'low'
+        }
+      ];
 
-      for (const ward of wards) {
-        const total = Math.floor(Math.random() * 150) + 50;
-        const resolved = Math.floor(total * (Math.random() * 0.4 + 0.3));
-        const active = Math.floor((total - resolved) * 0.7);
-        const urgent = Math.floor(Math.random() * 20) + 5;
-
-        let heatIndex: 'low' | 'medium' | 'high' = 'low';
-        if (urgent > 15 || active > 50) heatIndex = 'high';
-        else if (urgent > 10 || active > 30) heatIndex = 'medium';
-
-        data.push({
-          ward,
-          total,
-          active,
-          resolved,
-          urgent,
-          heatIndex
-        });
-      }
-
-      setWardData(data);
-      setFilteredData(data);
+      setWardData(wardsData);
+      setFilteredData(wardsData);
     } catch (error) {
       console.error('Error fetching ward data:', error);
     } finally {
@@ -211,7 +229,7 @@ export default function AdminWardInsightsPage() {
             {language === 'en' ? 'Ward Insights' : 'Maarifa ya Kata'}
           </h1>
           <p className="text-gray-600 mt-1">
-            {language === 'en' ? 'Data-driven insights across all wards' : 'Maarifa yanayotegemea data katika kata zote'}
+            {language === 'en' ? 'Visual overview of reports across Kibra\'s wards' : 'Muonekano wa ripoti katika kata za Kibra'}
           </p>
         </div>
         <div className="flex gap-3">
@@ -342,28 +360,47 @@ export default function AdminWardInsightsPage() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2 bg-white rounded-2xl shadow-md p-6 border border-gray-100"
+            className="lg:col-span-2 bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg hover:shadow-teal-100 transition-all duration-300"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
               {language === 'en' ? 'Reports by Ward' : 'Ripoti kwa Kata'}
             </h2>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
+                  innerRadius={70}
+                  outerRadius={110}
+                  paddingAngle={3}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  labelLine={true}
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={WARD_COLORS[index % WARD_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    padding: '8px 12px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  formatter={(value, entry: any) => (
+                    <span style={{ color: '#374151', fontSize: '13px', fontWeight: 500 }}>
+                      {value}: {entry.payload.value}
+                    </span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           </motion.div>

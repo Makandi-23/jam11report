@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Mail, Phone, Clock, MapPin, Send, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,41 +13,35 @@ interface ContactFormData {
 }
 
 const wardContacts = {
-  makongeni: {
+  'laini saba': {
     name: 'Grace Mwangi',
     phone: '+254 712 345 678',
-    email: 'makongeni@mombasa.go.ke',
-    hours: 'Mon-Fri: 8AM-5PM'
+    email: 'lainisaba@kibra.go.ke',
+    hours: '8:00 AM – 5:00 PM'
   },
-  bombolulu: {
+  makina: {
     name: 'Hassan Omar',
     phone: '+254 723 456 789',
-    email: 'bombolulu@mombasa.go.ke',
-    hours: 'Mon-Fri: 8AM-5PM'
+    email: 'makina@kibra.go.ke',
+    hours: '8:00 AM – 5:00 PM'
   },
-  kisauni: {
+  lindi: {
     name: 'Jane Kamau',
     phone: '+254 734 567 890',
-    email: 'kisauni@mombasa.go.ke',
-    hours: 'Mon-Fri: 8AM-5PM'
+    email: 'lindi@kibra.go.ke',
+    hours: '8:00 AM – 5:00 PM'
   },
-  changamwe: {
+  "sarang'ombe": {
     name: 'Peter Ochieng',
     phone: '+254 745 678 901',
-    email: 'changamwe@mombasa.go.ke',
-    hours: 'Mon-Fri: 8AM-5PM'
+    email: 'sarangombe@kibra.go.ke',
+    hours: '8:00 AM – 5:00 PM'
   },
-  likoni: {
+  'woodley/kenyatta golf course': {
     name: 'Fatuma Ali',
     phone: '+254 756 789 012',
-    email: 'likoni@mombasa.go.ke',
-    hours: 'Mon-Fri: 8AM-5PM'
-  },
-  nyali: {
-    name: 'John Kariuki',
-    phone: '+254 767 890 123',
-    email: 'nyali@mombasa.go.ke',
-    hours: 'Mon-Fri: 8AM-5PM'
+    email: 'woodley@kibra.go.ke',
+    hours: '8:00 AM – 5:00 PM'
   }
 };
 
@@ -79,22 +74,22 @@ const emergencyContacts = [
 
 const faqs = [
   {
-    question_en: 'How long does it take to get a response?',
-    question_sw: 'Inachukua muda gani kupata jibu?',
-    answer_en: 'We typically respond to all inquiries within 24-48 hours during business days.',
-    answer_sw: 'Kwa kawaida tunajibu maswali yote ndani ya masaa 24-48 wakati wa siku za kazi.'
+    question_en: 'How can I track my report?',
+    question_sw: 'Ninawezaje kufuatilia ripoti yangu?',
+    answer_en: 'Once you submit a report, you can track its status from your Dashboard under "My Reports". You\'ll receive updates when the status changes.',
+    answer_sw: 'Ukisha wasilisha ripoti, unaweza kufuatilia hali yake kutoka kwa Dashibodi yako chini ya "Ripoti Zangu". Utapokea masasisho wakati hali inabadilika.'
+  },
+  {
+    question_en: 'How are issues prioritized?',
+    question_sw: 'Masuala yanawekwaje kipaumbele?',
+    answer_en: 'Issues are prioritized based on urgency, community votes, and impact. Emergency issues like security threats are handled immediately.',
+    answer_sw: 'Masuala yanawekwa kipaumbele kulingana na dharura, kura za jamii, na athari. Masuala ya dharura kama vitisho vya usalama vinashughulikiwa mara moja.'
   },
   {
     question_en: 'Can I visit the ward office in person?',
     question_sw: 'Je, naweza kutembelea ofisi ya kata mimi mwenyewe?',
     answer_en: 'Yes, our offices are open Monday to Friday, 8AM-5PM. We recommend calling ahead to schedule an appointment.',
     answer_sw: 'Ndiyo, ofisi zetu zinafunguliwa Jumatatu hadi Ijumaa, 8AM-5PM. Tunapendekeza kupiga simu kabla ya kuja kuweka miadi.'
-  },
-  {
-    question_en: 'What should I do in case of emergency?',
-    question_sw: 'Nifanye nini ikiwa ni dharura?',
-    answer_en: 'For emergencies, please call the appropriate emergency number listed on this page. For urgent but non-emergency issues, you can report through our app.',
-    answer_sw: 'Kwa dharura, tafadhali piga simu nambari ya dharura inayofaa iliyoorodheshwa kwenye ukurasa huu. Kwa masuala ya haraka lakini si dharura, unaweza kuripoti kupitia programu yetu.'
   }
 ];
 
@@ -103,7 +98,7 @@ export default function ContactPage() {
   const { user } = useAuth();
   const [formData, setFormData] = useState<ContactFormData>({
     name: user?.user_metadata?.full_name || '',
-    ward: user?.user_metadata?.ward || '',
+    ward: user?.user_metadata?.ward || 'Lindi',
     phone: '',
     email: user?.email || '',
     message: ''
@@ -114,6 +109,13 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.name || !formData.ward || !formData.phone || !formData.email || !formData.message) {
+      setSubmitStatus('error');
+      setTimeout(() => setSubmitStatus('idle'), 3000);
+      return;
+    }
+
     setSubmitting(true);
     setSubmitStatus('idle');
 
@@ -141,16 +143,20 @@ export default function ContactPage() {
     <div className="max-w-6xl mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
-          {language === 'en' ? 'Contact Us' : 'Wasiliana Nasi'}
+          {language === 'en' ? 'Contact JamiiReport Support' : 'Wasiliana na Msaada wa JamiiReport'}
         </h1>
         <p className="text-gray-600 mt-1">
-          {language === 'en' ? 'Get in touch with your ward office' : 'Wasiliana na ofisi ya kata yako'}
+          {language === 'en' ? 'Reach your ward office or send us a message directly' : 'Wasiliana na ofisi ya kata yako au tutumie ujumbe moja kwa moja'}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg hover:shadow-teal-100 transition-all duration-300"
+          >
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               {language === 'en' ? 'Send us a message' : 'Tutumie ujumbe'}
             </h2>
@@ -173,14 +179,19 @@ export default function ContactPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     {language === 'en' ? 'Your Ward' : 'Kata Yako'}
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={formData.ward}
                     onChange={(e) => setFormData({ ...formData, ward: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                     disabled={!!user?.user_metadata?.ward}
-                  />
+                  >
+                    <option value="Lindi">Lindi</option>
+                    <option value="Makina">Makina</option>
+                    <option value="Woodley/Kenyatta Golf Course">Woodley/Kenyatta Golf Course</option>
+                    <option value="Sarang'ombe">Sarang'ombe</option>
+                    <option value="Laini Saba">Laini Saba</option>
+                  </select>
                 </div>
               </div>
 
@@ -228,21 +239,29 @@ export default function ContactPage() {
               </div>
 
               {submitStatus === 'success' && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl border border-green-200">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl border border-green-200"
+                >
                   <CheckCircle className="h-5 w-5 flex-shrink-0" />
                   <span className="text-sm">
-                    {language === 'en' ? 'Message sent successfully!' : 'Ujumbe umetumwa!'}
+                    {language === 'en' ? '✅ Your message has been sent!' : '✅ Ujumbe wako umetumwa!'}
                   </span>
-                </div>
+                </motion.div>
               )}
 
               {submitStatus === 'error' && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200"
+                >
                   <AlertCircle className="h-5 w-5 flex-shrink-0" />
                   <span className="text-sm">
-                    {language === 'en' ? 'Failed to send message. Please try again.' : 'Imeshindwa kutuma ujumbe. Tafadhali jaribu tena.'}
+                    {language === 'en' ? '⚠️ Please fill in all fields.' : '⚠️ Tafadhali jaza sehemu zote.'}
                   </span>
-                </div>
+                </motion.div>
               )}
 
               <button
@@ -263,12 +282,17 @@ export default function ContactPage() {
                 )}
               </button>
             </form>
-          </div>
+          </motion.div>
         </div>
 
         <div className="space-y-6">
           {wardContact && (
-            <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg hover:shadow-teal-100 transition-all duration-300"
+            >
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 {language === 'en' ? 'Your Ward Office' : 'Ofisi ya Kata Yako'}
               </h2>
@@ -283,7 +307,8 @@ export default function ContactPage() {
                 <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
                   <div>
-                    <p className="text-gray-900">{wardContact.phone}</p>
+                    <p className="text-sm text-gray-600">{language === 'en' ? 'Tel' : 'Simu'}</p>
+                    <a href={`tel:${wardContact.phone}`} className="text-gray-900 hover:text-teal-600 transition-colors">{wardContact.phone}</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -295,20 +320,32 @@ export default function ContactPage() {
                 <div className="flex items-start gap-3">
                   <Clock className="h-5 w-5 text-teal-600 mt-1 flex-shrink-0" />
                   <div>
+                    <p className="text-sm text-gray-600">{language === 'en' ? 'Hours' : 'Masaa'}</p>
                     <p className="text-gray-900">{wardContact.hours}</p>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg hover:shadow-red-100 transition-all duration-300"
+          >
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               {language === 'en' ? 'Emergency Contacts' : 'Nambari za Dharura'}
             </h2>
             <div className="space-y-3">
               {emergencyContacts.map((contact, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-xl border border-red-100">
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.05 }}
+                  className="flex items-center justify-between p-3 bg-red-50 rounded-xl border border-red-100 hover:shadow-md transition-shadow"
+                >
                   <div>
                     <p className="font-medium text-gray-900 text-sm">
                       {language === 'en' ? contact.name_en : contact.name_sw}
@@ -321,21 +358,27 @@ export default function ContactPage() {
                   >
                     {contact.phone}
                   </a>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg hover:shadow-teal-100 transition-all duration-300"
+          >
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               {language === 'en' ? 'Frequently Asked Questions' : 'Maswali Yanayoulizwa Mara kwa Mara'}
             </h2>
             <div className="space-y-2">
               {faqs.map((faq, index) => (
                 <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
-                  <button
+                  <motion.button
                     onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                     className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
+                    whileHover={{ scale: 1.01 }}
                   >
                     <span className="font-medium text-gray-900 text-sm">
                       {language === 'en' ? faq.question_en : faq.question_sw}
@@ -345,16 +388,21 @@ export default function ContactPage() {
                     ) : (
                       <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
                     )}
-                  </button>
+                  </motion.button>
                   {expandedFaq === index && (
-                    <div className="px-4 pb-4 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="px-4 pb-4 text-sm text-gray-600 border-t border-gray-100 pt-3"
+                    >
                       {language === 'en' ? faq.answer_en : faq.answer_sw}
-                    </div>
+                    </motion.div>
                   )}
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
