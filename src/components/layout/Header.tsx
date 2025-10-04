@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, FileText, Plus, Phone, LogOut, User } from 'lucide-react';
+import { Menu, X, Home, FileText, Plus, Phone, LogOut, User, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../contexts/I18nContext';
@@ -23,7 +23,10 @@ const Header: React.FC = () => {
     { to: user.role === 'admin' ? '/admin' : '/dashboard', label: t('nav.dashboard'), icon: Home },
     ...(user.role === 'resident' ? [{ to: '/profile', label: 'Profile', icon: User }] : []),
     { to: '/reports', label: t('nav.reports'), icon: FileText },
-    ...(user.role === 'resident' ? [{ to: '/report', label: t('nav.reportIssue'), icon: Plus }] : []),
+    ...(user.role === 'resident' ? [
+      { to: '/announcements', label: 'Announcements', icon: Megaphone },
+      { to: '/report', label: t('nav.reportIssue'), icon: Plus }
+    ] : []),
     { to: '/contact', label: t('nav.contact'), icon: Phone },
   ] : [
     { to: '/login', label: t('nav.login'), icon: User },

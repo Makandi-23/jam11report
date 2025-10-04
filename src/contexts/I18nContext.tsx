@@ -88,6 +88,33 @@ const translations = {
     'common.edit': 'Edit',
     'common.delete': 'Delete',
     'common.view': 'View',
+    
+    // Admin Analytics
+    'admin.analytics.title': 'Analytics & Trends',
+    'admin.analytics.subtitle': 'Insights into community reporting patterns',
+    'admin.analytics.export': 'Export',
+    'admin.analytics.refresh': 'Refresh',
+    'admin.analytics.comparison': 'Compare with previous period',
+    
+    // Admin Residents
+    'admin.residents.title': 'Residents Management',
+    'admin.residents.subtitle': 'Manage community members and their engagement',
+    'admin.residents.total': 'Total Residents',
+    'admin.residents.active': 'Active Residents',
+    'admin.residents.suspended': 'Suspended Residents',
+    'admin.residents.viewProfile': 'View Profile',
+    'admin.residents.suspend': 'Suspend',
+    'admin.residents.activate': 'Activate',
+    
+    // Admin Settings
+    'admin.settings.title': 'Settings',
+    'admin.settings.subtitle': 'Manage your admin profile and system configuration',
+    'admin.settings.profile': 'Admin Profile',
+    'admin.settings.system': 'System Settings',
+    'admin.settings.categories': 'Categories',
+    'admin.settings.wards': 'Wards',
+    'admin.settings.save': 'Save Changes',
+    'admin.settings.reset': 'Reset Defaults',
   },
   sw: {
     // Navigation
@@ -160,6 +187,33 @@ const translations = {
     'common.edit': 'Hariri',
     'common.delete': 'Futa',
     'common.view': 'Angalia',
+    
+    // Admin Analytics
+    'admin.analytics.title': 'Takwimu na Mielekeo',
+    'admin.analytics.subtitle': 'Maarifa kuhusu mifumo ya kuripoti kwa jamii',
+    'admin.analytics.export': 'Hamisha',
+    'admin.analytics.refresh': 'Onyesha Upya',
+    'admin.analytics.comparison': 'Linganisha na kipindi kilichopita',
+    
+    // Admin Residents
+    'admin.residents.title': 'Usimamizi wa Wakazi',
+    'admin.residents.subtitle': 'Simamia wanajamii na ushiriki wao',
+    'admin.residents.total': 'Wakazi Wote',
+    'admin.residents.active': 'Wakazi Hai',
+    'admin.residents.suspended': 'Wakazi Waliosimamishwa',
+    'admin.residents.viewProfile': 'Angalia Wasifu',
+    'admin.residents.suspend': 'Simamisha',
+    'admin.residents.activate': 'Washa',
+    
+    // Admin Settings
+    'admin.settings.title': 'Mipangilio',
+    'admin.settings.subtitle': 'Simamia wasifu wako wa msimamizi na usanidi wa mfumo',
+    'admin.settings.profile': 'Wasifu wa Msimamizi',
+    'admin.settings.system': 'Mipangilio ya Mfumo',
+    'admin.settings.categories': 'Makundi',
+    'admin.settings.wards': 'Kata',
+    'admin.settings.save': 'Hifadhi Mabadiliko',
+    'admin.settings.reset': 'Rudisha Chaguo-msingi',
   }
 };
 

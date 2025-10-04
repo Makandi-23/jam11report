@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Menu, X, Home, FileText, AlertTriangle, Map, 
+import {
+  Menu, X, Home, FileText, AlertTriangle, Map,
   BarChart3, Users, Settings, LogOut, User, Bell,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Megaphone
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../contexts/I18nContext';
@@ -22,7 +22,8 @@ const AdminLayout: React.FC = () => {
     { to: '/admin', label: 'Dashboard', icon: Home },
     { to: '/admin/reports', label: 'Reports', icon: FileText },
     { to: '/admin/urgent', label: 'Urgent Issues', icon: AlertTriangle },
-    { to: '/admin/map', label: 'Map View', icon: Map },
+    { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+    { to: '/admin/map', label: 'Ward Insights', icon: Map },
     { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { to: '/admin/residents', label: 'Residents', icon: Users },
     { to: '/admin/settings', label: 'Settings', icon: Settings },
