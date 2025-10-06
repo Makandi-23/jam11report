@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  User, Edit, Camera, Mail, Phone, MapPin,
-  Calendar, TrendingUp, FileText,
-  CheckCircle, Globe
-} from 'lucide-react';
+import { User, CreditCard as Edit, Camera, Mail, Phone, MapPin, Calendar, TrendingUp, FileText, CheckCircle, Globe } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import Header from '../components/layout/Header';
