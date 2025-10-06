@@ -21,13 +21,11 @@ const Header: React.FC = () => {
 
   const navItems = user ? [
     { to: user.role === 'admin' ? '/admin' : '/dashboard', label: t('nav.dashboard'), icon: Home },
+    { to: '/reports', label: 'My Reports', icon: FileText },
+    ...(user.role === 'resident' ? [{ to: '/report', label: t('nav.reportIssue'), icon: Plus }] : []),
+    ...(user.role === 'resident' ? [{ to: '/announcements', label: 'Announcements', icon: Megaphone }] : []),
+    { to: '/contact', label: 'Contact', icon: Phone },
     ...(user.role === 'resident' ? [{ to: '/profile', label: 'Profile', icon: User }] : []),
-    { to: '/reports', label: t('nav.reports'), icon: FileText },
-    ...(user.role === 'resident' ? [
-      { to: '/announcements', label: 'Announcements', icon: Megaphone },
-      { to: '/report', label: t('nav.reportIssue'), icon: Plus }
-    ] : []),
-    { to: '/contact', label: t('nav.contact'), icon: Phone },
   ] : [
     { to: '/login', label: t('nav.login'), icon: User },
     { to: '/register', label: t('nav.register'), icon: Plus },
@@ -36,43 +34,50 @@ const Header: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-pale shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md sticky">
+      <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/'} className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">J</span>
             </div>
             <span className="text-xl font-bold text-gray-900">
-              Jamii<span className="text-primary">report</span>
+              Jamii<span className="text-teal-600">Report</span>
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.to);
               return (
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive(item.to)
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:text-primary hover:bg-gray-100'
+                  className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                    active
+                      ? 'text-teal-600'
+                      : 'text-gray-700 hover:text-teal-600 hover:bg-teal-50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
+                  {active && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
                 </Link>
               );
             })}
-            
+
             {user && (
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
               >
                 <LogOut className="w-4 h-4" />
                 <span>{t('nav.logout')}</span>
@@ -80,13 +85,12 @@ const Header: React.FC = () => {
             )}
           </nav>
 
-          {/* Language Toggle & Mobile Menu Button */}
           <div className="flex items-center space-x-4">
             <LanguageToggle />
-            
+
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+              className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -94,7 +98,6 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -106,15 +109,16 @@ const Header: React.FC = () => {
             <div className="px-4 py-2 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                const active = isActive(item.to);
                 return (
                   <Link
                     key={item.to}
                     to={item.to}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition ${
-                      isActive(item.to)
-                        ? 'bg-primary text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
+                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      active
+                        ? 'bg-teal-50 text-teal-600 border-l-4 border-green-500'
+                        : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -122,11 +126,11 @@ const Header: React.FC = () => {
                   </Link>
                 );
               })}
-              
+
               {user && (
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition"
+                  className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
                 >
                   <LogOut className="w-5 h-5" />
                   <span>{t('nav.logout')}</span>

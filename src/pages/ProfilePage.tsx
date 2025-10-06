@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  User, Edit, Camera, Mail, Phone, MapPin, 
-  Calendar, Award, TrendingUp, FileText, 
-  CheckCircle, Bell, Globe
+import {
+  User, Edit, Camera, Mail, Phone, MapPin,
+  Calendar, TrendingUp, FileText,
+  CheckCircle, Globe
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
@@ -14,11 +14,6 @@ const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { t, language, setLanguage } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
-  const [notifications, setNotifications] = useState({
-    email: true,
-    sms: false,
-    push: true
-  });
 
   const badges = [
     { id: 'bronze', name: 'Bronze Helper', icon: '🥉', description: 'Submitted your first report', earned: true },
@@ -169,84 +164,6 @@ const ProfilePage: React.FC = () => {
                         <option value="Sarang'ombe">Sarang'ombe</option>
                       </select>
                     </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Notification Settings */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white rounded-xl p-6 shadow-md"
-              >
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Notification Preferences</h2>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Mail className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <div className="font-medium text-gray-900">Email Notifications</div>
-                        <div className="text-sm text-gray-500">Get updates about your reports via email</div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setNotifications(prev => ({ ...prev, email: !prev.email }))}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                        notifications.email ? 'bg-deepTeal' : 'bg-gray-200'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                          notifications.email ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Phone className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <div className="font-medium text-gray-900">SMS Notifications</div>
-                        <div className="text-sm text-gray-500">Get urgent updates via SMS</div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setNotifications(prev => ({ ...prev, sms: !prev.sms }))}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                        notifications.sms ? 'bg-deepTeal' : 'bg-gray-200'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                          notifications.sms ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Bell className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <div className="font-medium text-gray-900">Push Notifications</div>
-                        <div className="text-sm text-gray-500">Get browser notifications</div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setNotifications(prev => ({ ...prev, push: !prev.push }))}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                        notifications.push ? 'bg-deepTeal' : 'bg-gray-200'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                          notifications.push ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
                   </div>
                 </div>
               </motion.div>

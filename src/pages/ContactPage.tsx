@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, Clock, MapPin, Send, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 
 interface ContactFormData {
   name: string;
@@ -140,15 +142,19 @@ export default function ContactPage() {
   const wardContact = wardContacts[wardKey];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {language === 'en' ? 'Contact JamiiReport Support' : 'Wasiliana na Msaada wa JamiiReport'}
-        </h1>
-        <p className="text-gray-600 mt-1">
-          {language === 'en' ? 'Reach your ward office or send us a message directly' : 'Wasiliana na ofisi ya kata yako au tutumie ujumbe moja kwa moja'}
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <main className="pt-20 pb-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {language === 'en' ? 'Contact JamiiReport Support' : 'Wasiliana na Msaada wa JamiiReport'}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {language === 'en' ? 'Reach your ward office or send us a message directly' : 'Wasiliana na ofisi ya kata yako au tutumie ujumbe moja kwa moja'}
+            </p>
+          </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
@@ -405,6 +411,10 @@ export default function ContactPage() {
           </motion.div>
         </div>
       </div>
+        </div>
+      </main>
+
+      <Footer variant="dashboard" />
     </div>
   );
 }
