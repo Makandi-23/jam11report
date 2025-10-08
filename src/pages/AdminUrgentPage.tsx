@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  AlertTriangle, MapPin, TrendingUp, Clock, 
+import {
+  AlertTriangle, MapPin, TrendingUp, Clock,
   CheckCircle, Play, Filter, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import IssueDetailModal from '../components/admin/IssueDetailModal';
 
 interface UrgentIssue {
   id: number;
@@ -24,6 +25,8 @@ const AdminUrgentPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIssues, setSelectedIssues] = useState<number[]>([]);
+  const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const issuesPerPage = 6;
 
@@ -186,6 +189,16 @@ const AdminUrgentPage: React.FC = () => {
     );
   };
 
+  const handleCardClick = (issueId: number) => {
+    setSelectedIssueId(issueId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedIssueId(null);
+  };
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'security': return '🛡️';
@@ -298,9 +311,10 @@ const AdminUrgentPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ delay: index * 0.1 }}
-              className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                issue.votes > 70 
-                  ? 'border-red-200 shadow-red-100' 
+              onClick={() => handleCardClick(issue.id)}
+              className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer ${
+                issue.votes > 70
+                  ? 'border-red-200 shadow-red-100'
                   : issue.isMarkedUrgent
                   ? 'border-orange-200 shadow-orange-100'
                   : 'border-gray-200'
@@ -311,7 +325,11 @@ const AdminUrgentPage: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={selectedIssues.includes(issue.id)}
-                  onChange={() => toggleIssueSelection(issue.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    toggleIssueSelection(issue.id);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
                   className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 
@@ -379,7 +397,10 @@ const AdminUrgentPage: React.FC = () => {
               {/* Action Buttons */}
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleMarkUrgent(issue.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkUrgent(issue.id);
+                  }}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     issue.isMarkedUrgent
                       ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
@@ -389,13 +410,16 @@ const AdminUrgentPage: React.FC = () => {
                   <AlertTriangle className="w-3 h-3 inline mr-1" />
                   {issue.isMarkedUrgent ? 'Unmark' : 'Mark Urgent'}
                 </button>
-                
+
                 {issue.status !== 'resolved' && (
                   <button
-                    onClick={() => handleStatusChange(
-                      issue.id, 
-                      issue.status === 'pending' ? 'in-progress' : 'resolved'
-                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStatusChange(
+                        issue.id,
+                        issue.status === 'pending' ? 'in-progress' : 'resolved'
+                      );
+                    }}
                     className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       issue.status === 'pending'
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
@@ -477,7 +501,16 @@ const AdminUrgentPage: React.FC = () => {
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
           </button>
-        </motion.div> /* ✅ fixed closing tag */
+        </motion.div>
+      )}
+
+      {/* Issue Detail Modal */}
+      {selectedIssueId && (
+        <IssueDetailModal
+          issueId={selectedIssueId}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
       )}
     </div>
   );
