@@ -132,6 +132,7 @@ const ReportNewPage: React.FC = () => {
   };
 
   const onSubmit = async (data: FormData) => {
+    console.log('Form submitted with data:', data);
     setSubmitError('');
 
     if (!data.category || !data.title || !data.description || !data.ward) {
@@ -143,8 +144,10 @@ const ReportNewPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      console.log('Simulating submission...');
       await new Promise(resolve => setTimeout(resolve, 2000));
 
+      console.log('Submission successful!');
       setShowSuccess(true);
 
       reset({
@@ -165,6 +168,14 @@ const ReportNewPage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFormSubmit = (e?: React.FormEvent) => {
+    console.log('handleFormSubmit called');
+    if (e) {
+      e.preventDefault();
+    }
+    handleSubmit(onSubmit)(e);
   };
 
   const selectedCategory = watch('category');
@@ -334,7 +345,7 @@ const ReportNewPage: React.FC = () => {
           )}
 
           {/* Form Steps */}
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleFormSubmit}>
             <AnimatePresence mode="wait">
               {/* Step 1: Category Selection */}
               {currentStep === 1 && (
@@ -673,6 +684,11 @@ const ReportNewPage: React.FC = () => {
                 <motion.button
                   type="submit"
                   disabled={isSubmitting}
+                  onClick={(e) => {
+                    console.log('Button clicked!');
+                    e.preventDefault();
+                    handleSubmit(onSubmit)();
+                  }}
                   whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
                   whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                   className="flex items-center px-8 py-3 bg-deepTeal text-white rounded-xl hover:shadow-lg hover:shadow-deepTeal/30 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
