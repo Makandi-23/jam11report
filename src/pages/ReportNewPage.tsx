@@ -37,7 +37,7 @@ const ReportNewPage: React.FC = () => {
   const [submitError, setSubmitError] = useState('');
   const [uploadedPhotos, setUploadedPhotos] = useState<File[]>([]);
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, watch, setValue, getValues, reset } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: {
       category: '',
@@ -143,9 +143,21 @@ const ReportNewPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       setShowSuccess(true);
+
+      reset({
+        category: '',
+        title: '',
+        description: '',
+        ward: user?.ward || '',
+        estate: '',
+        photos: []
+      });
+
+      setUploadedPhotos([]);
+      setCurrentStep(1);
     } catch (error) {
       console.error('Error submitting report:', error);
       setSubmitError('⚠️ Failed to submit report. Please try again.');
@@ -172,10 +184,30 @@ const ReportNewPage: React.FC = () => {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8"
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8 relative"
             >
-              <CheckCircle className="w-12 h-12 text-green-600" />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+              >
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </motion.div>
+
+              <motion.div
+                className="absolute inset-0 rounded-full border-4 border-green-500"
+                initial={{ scale: 1, opacity: 1 }}
+                animate={{ scale: 1.5, opacity: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              />
+
+              <motion.div
+                className="absolute inset-0 rounded-full border-4 border-green-400"
+                initial={{ scale: 1, opacity: 1 }}
+                animate={{ scale: 2, opacity: 0 }}
+                transition={{ duration: 1, delay: 0.5 }}
+              />
             </motion.div>
 
             <motion.div
@@ -206,6 +238,15 @@ const ReportNewPage: React.FC = () => {
                   setShowSuccess(false);
                   setCurrentStep(1);
                   setUploadedPhotos([]);
+                  setSubmitError('');
+                  reset({
+                    category: '',
+                    title: '',
+                    description: '',
+                    ward: user?.ward || '',
+                    estate: '',
+                    photos: []
+                  });
                 }}
                 className="px-6 py-3 border-2 border-deepTeal text-deepTeal rounded-xl hover:bg-deepTeal hover:text-white transition font-medium"
               >
@@ -629,14 +670,28 @@ const ReportNewPage: React.FC = () => {
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </button>
               ) : (
-                <button
+                <motion.button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex items-center px-8 py-3 bg-deepTeal text-white rounded-xl hover:bg-deepTeal/90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                  whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                  className="flex items-center px-8 py-3 bg-deepTeal text-white rounded-xl hover:shadow-lg hover:shadow-deepTeal/30 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
                 >
+                  {isSubmitting && (
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      initial={{ x: '-100%' }}
+                      animate={{ x: '200%' }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                    />
+                  )}
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <motion.div
+                        className="rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      />
                       Submitting...
                     </>
                   ) : (
@@ -645,7 +700,7 @@ const ReportNewPage: React.FC = () => {
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </>
                   )}
-                </button>
+                </motion.button>
               )}
             </div>
           </form>
