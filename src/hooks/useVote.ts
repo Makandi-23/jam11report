@@ -24,12 +24,15 @@ export const useVote = () => {
     setVotingStates(prev => ({ ...prev, [reportId]: true }));
 
     try {
-      const response = await fetch(`/api/reports/${reportId}/vote`, {
+      const response = await fetch('http://localhost/jam11report/backend/api/reports/vote.php', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          report_id: reportId,
+          user_id: user.id // Make sure your user object has id
+        }),
       });
 
       if (!response.ok) {
@@ -38,10 +41,12 @@ export const useVote = () => {
 
       const data = await response.json();
 
-      // Store vote in localStorage
-      const votedReports = getVotedReports();
-      votedReports.push(reportId);
-      localStorage.setItem(`voted_reports_${user.id}`, JSON.stringify(votedReports));
+      if (data.message === "Vote added successfully.") {
+        // Store vote in localStorage
+        const votedReports = getVotedReports();
+        votedReports.push(reportId);
+        localStorage.setItem(`voted_reports_${user.id}`, JSON.stringify(votedReports));
+      }
 
       return data;
     } catch (error) {

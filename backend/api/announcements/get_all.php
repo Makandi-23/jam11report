@@ -11,46 +11,46 @@ function handleCors() {
     
     // Set CORS headers for actual requests
     header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/json; charset=UTF-8");
 }
 handleCors();
 
 include_once '../../config/database.php';
-include_once '../../models/Report.php';
+include_once '../../models/Announcement.php';
 
 $database = new Database();
 $db = $database->getConnection();
 
-$report = new Report($db);
+$announcement = new Announcement($db);
 
-$user_id = isset($_GET['user_id']) ? $_GET['user_id'] : die();
-
-$stmt = $report->getByUserId($user_id);
+$stmt = $announcement->getAll();
 $num = $stmt->rowCount();
 
 if($num > 0) {
-    $reports_arr = array();
-    $reports_arr["reports"] = array();
+    $announcements_arr = array();
+    $announcements_arr["announcements"] = array();
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $report_item = array(
+        $announcement_item = array(
             "id" => $row['id'],
-            "title" => $row['title'],
-            "description" => $row['description'],
+            "admin_id" => $row['admin_id'],
+            "title_en" => $row['title_en'],
+            "title_sw" => $row['title_sw'],
+            "message_en" => $row['message_en'],
+            "message_sw" => $row['message_sw'],
             "category" => $row['category'],
-            "ward" => $row['ward'],
-            "status" => $row['status'],
-            "is_urgent" => $row['is_urgent'],
-            "vote_count" => $row['vote_count'],
+            "priority" => $row['priority'],
+            "target_ward" => $row['target_ward'],
+            "expires_at" => $row['expires_at'],
             "created_at" => $row['created_at']
         );
-        array_push($reports_arr["reports"], $report_item);
+        array_push($announcements_arr["announcements"], $announcement_item);
     }
 
     http_response_code(200);
-    echo json_encode($reports_arr);
+    echo json_encode($announcements_arr);
 } else {
     http_response_code(404);
-    echo json_encode(array("message" => "No reports found."));
+    echo json_encode(array("message" => "No announcements found."));
 }
 ?>

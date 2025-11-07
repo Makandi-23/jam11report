@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/layout/Header';
+import { Ban } from 'lucide-react';
 
 interface FormData {
   category: string;
@@ -25,7 +26,8 @@ const schema = yup.object({
   title: yup.string().required('Title is required').min(10, 'Title must be at least 10 characters'),
   description: yup.string().required('Description is required').min(20, 'Description must be at least 20 characters'),
   ward: yup.string().required('Please select your ward'),
-  estate: yup.string(),
+   estate: yup.string().optional(), // Make estate optional
+  photos: yup.array().of(yup.mixed() as yup.Schema<File>).optional()
 });
 
 const ReportNewPage: React.FC = () => {
@@ -36,9 +38,10 @@ const ReportNewPage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [uploadedPhotos, setUploadedPhotos] = useState<File[]>([]);
+  const [showSuspendedAlert, setShowSuspendedAlert] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
     defaultValues: {
       category: '',
       title: '',
@@ -130,31 +133,69 @@ const ReportNewPage: React.FC = () => {
   const removePhoto = (index: number) => {
     setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
   };
+ 
 
-  const onSubmit = async (data: FormData) => {
-    setSubmitError('');
+const onSubmit = async (data: FormData) => {
 
-    if (!data.category || !data.title || !data.description || !data.ward) {
-      setSubmitError('⚠️ Please complete all required fields before submitting.');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+  if (user?.status === 'suspended') {
+    setShowSuspendedAlert(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  
+  setSubmitError('');
 
-    setIsSubmitting(true);
+  if (!data.category || !data.title || !data.description || !data.ward) {
+   
+    setSubmitError('⚠️ Please complete all required fields before submitting.');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+  setIsSubmitting(true);
 
+  try {
+    const reportData = {
+      user_id: user?.id,
+      title: data.title,
+      description: data.description,
+      category: data.category.charAt(0).toUpperCase() + data.category.slice(1),
+      ward: data.ward,
+      location_details: data.estate || '',
+      image_path: ''
+    };
+
+  
+
+    const response = await fetch('http://localhost/jam11report/backend/api/reports/create.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(reportData),
+    });
+
+   
+    
+    const result = await response.json();
+   
+
+    if (response.ok) {
+     
       setShowSuccess(true);
-    } catch (error) {
-      console.error('Error submitting report:', error);
-      setSubmitError('⚠️ Failed to submit report. Please try again.');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      throw new Error(result.message || `Server returned ${response.status}: ${response.statusText}`);
     }
-  };
-
+  } catch (error) {
+   
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    setSubmitError(`⚠️ Failed to submit report: ${errorMessage}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } finally {
+    
+    setIsSubmitting(false);
+  }
+};
   const selectedCategory = watch('category');
   const title = watch('title');
   const description = watch('description');
@@ -233,6 +274,7 @@ const ReportNewPage: React.FC = () => {
       </div>
     );
   }
+ 
 
   return (
     <div className="min-h-screen bg-pale">
@@ -291,9 +333,10 @@ const ReportNewPage: React.FC = () => {
               <p className="text-red-800 font-medium">{submitError}</p>
             </motion.div>
           )}
-
+           
+         
           {/* Form Steps */}
-          <form onSubmit={handleSubmit(onSubmit)}>
+                  <form onSubmit={(e) => e.preventDefault()}>
             <AnimatePresence mode="wait">
               {/* Step 1: Category Selection */}
               {currentStep === 1 && (
@@ -354,6 +397,21 @@ const ReportNewPage: React.FC = () => {
                   )}
                 </motion.div>
               )}
+
+              {/* Suspension Alert */}
+{showSuspendedAlert && (
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3"
+  >
+    <Ban className="w-6 h-6 text-red-600 flex-shrink-0" />
+    <div>
+      <p className="text-red-800 font-medium">Your account is suspended</p>
+      <p className="text-red-700 text-sm">You cannot submit reports while your account is suspended.</p>
+    </div>
+  </motion.div>
+)}
 
               {/* Step 2: Title & Description */}
               {currentStep === 2 && (
@@ -599,55 +657,84 @@ const ReportNewPage: React.FC = () => {
             </AnimatePresence>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8">
-              <button
-                type="button"
-                onClick={prevStep}
-                disabled={currentStep === 1}
-                className={`flex items-center px-6 py-3 rounded-xl font-medium transition ${
-                  currentStep === 1
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Previous
-              </button>
+<div className="flex justify-between mt-8">
+  <button
+    type="button"
+    onClick={prevStep}
+    disabled={currentStep === 1}
+    className={`flex items-center px-6 py-3 rounded-xl font-medium transition ${
+      currentStep === 1
+        ? 'text-gray-400 cursor-not-allowed'
+        : 'text-gray-700 hover:bg-gray-100'
+    }`}
+  >
+    <ChevronLeft className="w-4 h-4 mr-2" />
+    Previous
+  </button>
 
-              {currentStep < 5 ? (
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={
-                    (currentStep === 1 && !selectedCategory) ||
-                    (currentStep === 2 && (!title || !description)) ||
-                    (currentStep === 3 && !getValues('ward'))
-                  }
-                  className="flex items-center px-6 py-3 bg-deepTeal text-white rounded-xl hover:bg-deepTeal/90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex items-center px-8 py-3 bg-deepTeal text-white rounded-xl hover:bg-deepTeal/90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      Submit Report
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
+  {/* Steps 1-4: Navigation Only */}
+  {currentStep < 4 && (
+    <button
+      type="button"
+      onClick={nextStep}
+      disabled={
+        (currentStep === 1 && !selectedCategory) ||
+        (currentStep === 2 && (!title || !description)) ||
+        (currentStep === 3 && !getValues('ward'))
+      }
+      className="flex items-center px-6 py-3 bg-deepTeal text-white rounded-xl hover:bg-deepTeal/90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Next
+      <ChevronRight className="w-4 h-4 ml-2" />
+    </button>
+  )}
+
+  {/* Step 4: Go to Review */}
+  {currentStep === 4 && (
+    <button
+      type="button"
+      onClick={nextStep}
+      className="flex items-center px-6 py-3 bg-deepTeal text-white rounded-xl hover:bg-deepTeal/90 transition font-medium"
+    >
+      Review & Submit
+      <CheckCircle className="w-4 h-4 ml-2" />
+    </button>
+  )}
+
+ {/* Step 5: Actual Submission */}
+{currentStep === 5 && (
+  <button
+    type="button"
+    onClick={() => {
+      // DOUBLE CHECK suspension status before even trying to submit
+      if (user?.status === 'suspended') {
+        setShowSuspendedAlert(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      
+      const allData = getValues();
+      onSubmit(allData);
+    }}
+    disabled={isSubmitting || user?.status === 'suspended'} // Also disable button for suspended users
+    className="flex items-center px-8 py-3 bg-deepTeal text-white rounded-xl hover:bg-deepTeal/90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    {isSubmitting ? (
+      <>
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        Submitting...
+      </>
+    ) : user?.status === 'suspended' ? (
+      'Account Suspended'
+    ) : (
+      <>
+        Confirm & Submit Report
+        <CheckCircle className="w-4 h-4 ml-2" />
+      </>
+    )}
+  </button>
+)}
+</div>
           </form>
         </div>
       </main>

@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { I18nProvider } from './contexts/I18nContext';
-import { makeServer } from './mock/server';
 import AdminLayout from './components/layout/AdminLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -10,7 +9,6 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminReportsPage from './pages/AdminReportsPage';
-import AdminUrgentPage from './pages/AdminUrgentPage';
 import AdminWardInsightsPage from './pages/AdminWardInsightsPage';
 import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
 import AdminResidentsPage from './pages/AdminResidentsPage';
@@ -22,11 +20,9 @@ import ReportNewPage from './pages/ReportNewPage';
 import ContactPage from './pages/ContactPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import AdminAnnouncementsPage from './pages/AdminAnnouncementsPage';
-
-// Start MirageJS server in development
-if (import.meta.env.DEV) {
-  makeServer();
-}
+import MyReportsPage from './pages/MyReportsPage';
+import SuspensionAlert from './components/SuspensionAlert';
+import DepartmentDashboard from './components/DepartmentDashboard';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({ 
   children, 
@@ -55,7 +51,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean 
 
   return <>{children}</>;
 };
-
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
 
@@ -71,12 +66,19 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+    // 🆕 ENHANCED REDIRECT LOGIC WITH DEPARTMENT SUPPORT
+    if (user.role === 'admin') {
+      if (user.department === 'all') {
+        return <Navigate to="/admin" replace />; // Super Admin
+      } else {
+        return <Navigate to="/admin/department" replace />; // Department Admin
+      }
+    }
+    return <Navigate to="/dashboard" replace />; // Regular user
   }
 
   return <>{children}</>;
 };
-
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -105,6 +107,8 @@ const AppRoutes: React.FC = () => {
           <ProfilePage />
         </ProtectedRoute>
       } />
+      
+      {/* Admin Routes */}
       <Route path="/admin" element={
         <ProtectedRoute adminOnly>
           <AdminLayout />
@@ -112,21 +116,14 @@ const AppRoutes: React.FC = () => {
       }>
         <Route index element={<AdminDashboardPage />} />
         <Route path="reports" element={<AdminReportsPage />} />
-        <Route path="urgent" element={<AdminUrgentPage />} />
+         <Route path="department" element={<DepartmentDashboard />} /> {/* 🆕 ADD THIS LINE */}
         <Route path="map" element={<AdminWardInsightsPage />} />
-        <Route path="analytics" element={
-          <AdminAnalyticsPage />
-        } />
-        <Route path="residents" element={
-          <AdminResidentsPage />
-        } />
-        <Route path="settings" element={
-          <AdminSettingsPage />
-        } />
-        <Route path="announcements" element={
-          <AdminAnnouncementsPage />
-        } />
+        <Route path="analytics" element={<AdminAnalyticsPage />} />
+        <Route path="residents" element={<AdminResidentsPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
+        <Route path="announcements" element={<AdminAnnouncementsPage />} />
       </Route>
+
       <Route path="/reports" element={
         <ProtectedRoute>
           <ReportsPage />
@@ -135,6 +132,11 @@ const AppRoutes: React.FC = () => {
       <Route path="/reports/:id" element={
         <ProtectedRoute>
           <ReportDetailsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/my-reports" element={
+        <ProtectedRoute>
+          <MyReportsPage />
         </ProtectedRoute>
       } />
       <Route path="/report" element={
@@ -169,11 +171,14 @@ function App() {
   return (
     <I18nProvider>
       <AuthProvider>
+        <SuspensionAlert />
+        
         <Router>
           <AppRoutes />
         </Router>
       </AuthProvider>
     </I18nProvider>
+    
   );
 }
 

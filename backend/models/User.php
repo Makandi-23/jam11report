@@ -14,6 +14,7 @@ class User {
     public $role;
     public $status;
     public $created_at;
+    public $department;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -23,7 +24,8 @@ class User {
         $query = "INSERT INTO " . $this->table_name . "
                 SET full_name=:full_name, email=:email, password=:password, 
                 phone=:phone, ward=:ward, estate_street=:estate_street, 
-                proof_of_residence_path=:proof_of_residence_path";
+                proof_of_residence_path=:proof_of_residence_path,
+                status='verified'"; 
         
         $stmt = $this->conn->prepare($query);
 
@@ -48,7 +50,7 @@ class User {
     }
 
     public function emailExists() {
-        $query = "SELECT id, full_name, password, role, status
+        $query = "SELECT id, full_name, password, role, status, ward, phone, NULL as department
                 FROM " . $this->table_name . "
                 WHERE email = ?
                 LIMIT 0,1";
@@ -64,6 +66,32 @@ class User {
             $this->password = $row['password'];
             $this->role = $row['role'];
             $this->status = $row['status'];
+             $this->ward = $row['ward'];      // ADD THIS LINE
+        $this->phone = $row['phone'];
+         $this->department = $row['department']; 
+            return true;
+        }
+
+         $query = "SELECT id, full_name, password, role, 'verified' as status, 
+                         ward, phone, department
+                  FROM admins 
+                  WHERE email = ?
+                  LIMIT 0,1";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->email);
+        $stmt->execute();
+
+        if($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $this->id = $row['id'];
+            $this->full_name = $row['full_name'];
+            $this->password = $row['password'];
+            $this->role = $row['role'];
+            $this->status = $row['status'];
+            $this->ward = $row['ward'];
+            $this->phone = $row['phone'];
+            $this->department = $row['department'];
             return true;
         }
         return false;
@@ -78,5 +106,72 @@ class User {
         }
         return false;
     }
+
+    // Add these methods to your existing User.php class
+
+public function getProfile() {
+    $query = "SELECT id, full_name, email, phone, ward, estate_street, role, status, created_at 
+              FROM " . $this->table_name . " 
+              WHERE id = ?";
+    
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(1, $this->id);
+    $stmt->execute();
+    
+    return $stmt;
+}
+
+public function updateProfile() {
+    $query = "UPDATE " . $this->table_name . "
+              SET full_name = :full_name,
+                  email = :email,
+                  phone = :phone,
+                  ward = :ward,
+                  estate_street = :estate_street
+              WHERE id = :id";
+    
+    $stmt = $this->conn->prepare($query);
+    
+    $stmt->bindParam(':full_name', $this->full_name);
+    $stmt->bindParam(':email', $this->email);
+    $stmt->bindParam(':phone', $this->phone);
+    $stmt->bindParam(':ward', $this->ward);
+    $stmt->bindParam(':estate_street', $this->estate_street);
+    $stmt->bindParam(':id', $this->id);
+    
+    if($stmt->execute()) {
+        return true;
+    }
+    return false;
+}
+
+// Method to get all residents for admin
+public function getAllResidents() {
+    $query = "SELECT id, full_name, email, phone, ward, status, created_at 
+              FROM " . $this->table_name . " 
+              WHERE role = 'resident' 
+              ORDER BY created_at DESC";
+    
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute();
+    
+    return $stmt;
+}
+
+public function updateStatus() {
+    $query = "UPDATE " . $this->table_name . "
+              SET status = :status
+              WHERE id = :id";
+    
+    $stmt = $this->conn->prepare($query);
+    
+    $stmt->bindParam(':status', $this->status);
+    $stmt->bindParam(':id', $this->id);
+    
+    if($stmt->execute()) {
+        return true;
+    }
+    return false;
+}
 }
 ?>

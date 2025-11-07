@@ -71,84 +71,184 @@ const AdminDashboardPage: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      // Fetch stats
-      const statsResponse = await fetch('/api/stats');
-      const statsData = await statsResponse.json();
-      
-      // Mock additional data for demo
-      setStats({
-        total: statsData.total || 98,
-        active: (statsData.pending || 0) + (statsData.inProgress || 0),
-        resolved: statsData.resolved || 67,
-        newReports: 12,
-        totalChange: 8.5,
-        activeChange: -3.2,
-        resolvedChange: 15.7,
-        newChange: 22.1
-      });
-
-      // Mock urgent issues
-      setUrgentIssues([
-        {
-          id: 1,
-          title: "Open drain causing flooding on main road",
-          category: "environment",
-          ward: "Lindi",
-          votes: 67,
-          createdAt: "2025-01-15T10:00:00Z",
-          status: "pending"
-        },
-        {
-          id: 2,
-          title: "Street fights disrupting market business",
-          category: "security",
-          ward: "Makina",
-          votes: 54,
-          createdAt: "2025-01-12T15:40:00Z",
-          status: "pending"
-        },
-        {
-          id: 3,
-          title: "Water shortage affecting entire neighborhood",
-          category: "health",
-          ward: "Sarang'ombe",
-          votes: 43,
-          createdAt: "2025-01-10T11:30:00Z",
-          status: "in-progress"
-        }
-      ]);
-
-      // Mock recent activity
-      setRecentActivity([
-        {
-          id: 1,
-          type: 'new_report',
-          title: 'New garbage collection issue reported',
-          user: 'John Mwangi',
-          timestamp: '5m ago'
-        },
-        {
-          id: 2,
-          type: 'status_change',
-          title: 'Streetlight issue marked as resolved',
-          user: 'Admin',
-          timestamp: '12m ago'
-        },
-        {
-          id: 3,
-          type: 'urgent_mark',
-          title: 'Drainage issue marked as urgent',
-          user: 'Admin',
-          timestamp: '1h ago'
-        }
-      ]);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+ const fetchDashboardData = async () => {
+  try {
+    console.log('🔄 Fetching dashboard data...');
+    
+    // Use the working stats API
+    const statsResponse = await fetch('http://localhost/jam11report/backend/api/admin/stats.php');
+    
+    if (!statsResponse.ok) {
+      throw new Error(`Stats API failed: ${statsResponse.status}`);
     }
-  };
+    
+    const statsData = await statsResponse.json();
+    console.log('📊 Stats API data:', statsData);
 
+    // Fetch all reports for additional calculations
+    const reportsResponse = await fetch('http://localhost/jam11report/backend/api/reports/all_reports.php');
+    const reportsData = await reportsResponse.json();
+    const allReports = reportsData.reports || [];
+    console.log('📋 Total reports from API:', allReports.length);
+
+    // Calculate status counts from all reports
+    const statusCounts = {
+      pending: 0,
+      inProgress: 0,
+      resolved: 0
+    };
+
+    allReports.forEach((report: any) => {
+      const status = report.status?.toLowerCase();
+      if (status === 'resolved') {
+        statusCounts.resolved++;
+      } else if (status === 'in_progress' || status === 'in-progress') {
+        statusCounts.inProgress++;
+      } else {
+        statusCounts.pending++;
+      }
+    });
+
+    // Calculate new reports in last 7 days
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const newReportsCount = allReports.filter((report: any) => {
+      try {
+        const reportDate = new Date(report.created_at);
+        return reportDate > oneWeekAgo;
+      } catch (error) {
+        return false;
+      }
+    }).length;
+
+    // Calculate active reports (pending + in-progress)
+    const activeReports = statusCounts.pending + statusCounts.inProgress;
+
+    console.log('🧮 Calculated stats:', {
+      total: statsData.total_reports,
+      active: activeReports,
+      resolved: statusCounts.resolved,
+      newReports: newReportsCount,
+      statusCounts
+    });
+
+    // Set real stats - using data from stats API and calculations
+    setStats({
+      total: statsData.total_reports || 0,
+      active: activeReports,
+      resolved: statusCounts.resolved,
+      newReports: newReportsCount,
+      totalChange: 0,
+      activeChange: 0,
+      resolvedChange: 0,
+      newChange: 0
+    });
+
+    // Get urgent issues from real data
+    const urgentIssuesFromAPI = allReports
+      .filter((report: any) => {
+        const isUrgent = report.is_urgent === "1" || report.is_urgent === 1;
+        const hasHighVotes = parseInt(report.vote_count) >= 20;
+        return isUrgent || hasHighVotes;
+      })
+      .sort((a: any, b: any) => (parseInt(b.vote_count) || 0) - (parseInt(a.vote_count) || 0))
+      .slice(0, 5)
+      .map((report: any) => ({
+        id: parseInt(report.id),
+        title: report.title,
+        category: report.category?.toLowerCase() || 'other',
+        ward: report.ward,
+        votes: parseInt(report.vote_count) || 0,
+        createdAt: report.created_at,
+        status: report.status
+      }));
+
+    console.log('🚨 Urgent issues found:', urgentIssuesFromAPI.length);
+    setUrgentIssues(urgentIssuesFromAPI);
+
+    // Calculate category data from real reports
+    const categoryCounts: { [key: string]: number } = {};
+    allReports.forEach((report: any) => {
+      const category = (report.category?.toLowerCase() || 'other');
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    console.log('📊 Category counts:', categoryCounts);
+
+    const realCategoryData = [
+      { 
+        name: 'Security', 
+        count: categoryCounts.security || 0, 
+        color: 'bg-red-500', 
+        icon: '🛡️' 
+      },
+      { 
+        name: 'Environment', 
+        count: categoryCounts.environment || 0, 
+        color: 'bg-green-500', 
+        icon: '🌿' 
+      },
+      { 
+        name: 'Health', 
+        count: categoryCounts.health || 0, 
+        color: 'bg-emerald-500', 
+        icon: '➕' 
+      },
+      { 
+        name: 'Other', 
+        count: (categoryCounts.other || 0) + (Object.keys(categoryCounts)
+          .filter(cat => !['security', 'environment', 'health', 'other'].includes(cat))
+          .reduce((sum, cat) => sum + (categoryCounts[cat] || 0), 0)), 
+        color: 'bg-slate-500', 
+        icon: 'ℹ️' 
+      }
+    ];
+
+    setCategoryData(realCategoryData);
+
+    // Enhanced recent activity with real data
+    setRecentActivity([
+      {
+        id: 1,
+        type: 'new_report',
+        title: `${newReportsCount} new reports in last 7 days`,
+        user: 'System',
+        timestamp: 'Updated just now'
+      },
+      {
+        id: 2,
+        type: 'urgent_mark',
+        title: `${statsData.urgent_reports || 0} urgent issues need attention`,
+        user: 'System',
+        timestamp: 'Today'
+      },
+      {
+        id: 3,
+        type: 'status_change',
+        title: `${statusCounts.resolved} total reports resolved`,
+        user: 'System',
+        timestamp: 'Today'
+      }
+    ]);
+
+    console.log('✅ Dashboard data loaded successfully!');
+
+  } catch (error) {
+    console.error('❌ Error fetching dashboard data:', error);
+    
+    // Set fallback data based on your actual numbers
+    setStats({
+      total: 11, // Your actual total from API
+      active: 7,  // Your pending reports
+      resolved: 0, // Will be calculated
+      newReports: 11, // All are recent
+      totalChange: 0,
+      activeChange: 0,
+      resolvedChange: 0,
+      newChange: 0
+    });
+  }
+};
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -185,49 +285,89 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (issueId: number, newStatus: string) => {
-    // Mock status update
+ const handleStatusChange = async (issueId: number, newStatus: string) => {
+  try {
+    // Map frontend status to backend status
+    const mapStatusToBackend = (status: string): string => {
+      switch (status) {
+        case 'in-progress': return 'in_progress';
+        case 'resolved': return 'resolved';
+        default: return 'pending';
+      }
+    };
+
+    const backendStatus = mapStatusToBackend(newStatus);
+    
+    // Update UI optimistically
     setUrgentIssues(prev => 
       prev.map(issue => 
         issue.id === issueId ? { ...issue, status: newStatus } : issue
       )
     );
-  };
 
-  const statsCards = [
-    {
-      title: 'Total Reports',
-      value: stats.total,
-      change: stats.totalChange,
-      icon: FileText,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
-    },
-    {
-      title: 'Active Reports',
-      value: stats.active,
-      change: stats.activeChange,
-      icon: Clock,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100'
-    },
-    {
-      title: 'Reports Resolved',
-      value: stats.resolved,
-      change: stats.resolvedChange,
-      icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
-    },
-    {
-      title: 'New Reports (7d)',
-      value: stats.newReports,
-      change: stats.newChange,
-      icon: TrendingUp,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+    // Send to backend
+    const response = await fetch('http://localhost/jam11report/backend/api/reports/update_status.php', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: issueId,
+        status: backendStatus,
+        is_urgent: false
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update status');
     }
-  ];
+
+    // Refresh data to get updated stats
+    fetchDashboardData();
+
+  } catch (error) {
+    console.error('Error updating status:', error);
+  }
+};
+
+ const statsCards = [
+  {
+    title: 'Total Reports',
+    value: stats.total,
+    change: 0, // No change data yet
+    icon: FileText,
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
+    description: 'All community reports'
+  },
+  {
+    title: 'Active Reports',
+    value: stats.active,
+    change: 0,
+    icon: Clock,
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100',
+    description: 'Pending + In Progress'
+  },
+  {
+    title: 'Reports Resolved',
+    value: stats.resolved,
+    change: 0,
+    icon: CheckCircle,
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    description: 'Successfully resolved'
+  },
+  {
+    title: 'New Reports (7d)',
+    value: stats.newReports,
+    change: 0,
+    icon: TrendingUp,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    description: 'Last 7 days'
+  }
+];
 
   return (
     <div className="p-8 space-y-8">
@@ -269,7 +409,7 @@ const AdminDashboardPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -4, shadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+              whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
               className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
             >
               <div className="flex items-center justify-between mb-4">

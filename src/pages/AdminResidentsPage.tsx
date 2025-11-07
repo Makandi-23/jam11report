@@ -7,6 +7,7 @@ import {
   FileText, X, AlertTriangle, CheckCircle
 } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
+import { apiService } from '../services/api';
 
 interface Resident {
   id: number;
@@ -54,95 +55,40 @@ const AdminResidentsPage: React.FC = () => {
     applyFilters();
   }, [residents, filters]);
 
-  const fetchResidents = async () => {
-    try {
-      // Mock data - replace with actual API calls
-      const mockResidents: Resident[] = [
-        {
-          id: 1,
-          name: 'Amina Hassan',
-          email: 'amina.hassan@email.com',
-          phone: '+254712345678',
-          ward: 'Lindi',
-          avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          reportsSubmitted: 12,
-          votesCast: 45,
-          status: 'active',
-          joinedAt: '2024-01-15',
-          lastActive: '2025-01-20',
-          engagementScore: 85
-        },
-        {
-          id: 2,
-          name: 'John Mwangi',
-          email: 'john.mwangi@email.com',
-          phone: '+254723456789',
-          ward: 'Makina',
-          avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          reportsSubmitted: 8,
-          votesCast: 32,
-          status: 'active',
-          joinedAt: '2024-02-20',
-          lastActive: '2025-01-19',
-          engagementScore: 72
-        },
-        {
-          id: 3,
-          name: 'Grace Wanjiku',
-          email: 'grace.wanjiku@email.com',
-          phone: '+254734567890',
-          ward: 'Laini Saba',
-          avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          reportsSubmitted: 15,
-          votesCast: 67,
-          status: 'suspended',
-          joinedAt: '2024-01-10',
-          lastActive: '2025-01-18',
-          engagementScore: 91
-        },
-        {
-          id: 4,
-          name: 'Peter Kamau',
-          email: 'peter.kamau@email.com',
-          phone: '+254745678901',
-          ward: 'Woodley/Kenyatta Golf Course',
-          avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          reportsSubmitted: 6,
-          votesCast: 23,
-          status: 'active',
-          joinedAt: '2024-03-05',
-          lastActive: '2025-01-21',
-          engagementScore: 58
-        },
-        {
-          id: 5,
-          name: 'Mary Njeri',
-          email: 'mary.njeri@email.com',
-          phone: '+254756789012',
-          ward: "Sarang'ombe",
-          avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          reportsSubmitted: 20,
-          votesCast: 89,
-          status: 'active',
-          joinedAt: '2023-12-01',
-          lastActive: '2025-01-20',
-          engagementScore: 95
-        }
-      ];
+ const fetchResidents = async () => {
+  try {
+    const response = await apiService.getResidents();
+    
+    if (response.residents) {
+      const residentsData: Resident[] = response.residents.map((resident: any) => ({
+        id: resident.id,
+        name: resident.full_name,
+        email: resident.email,
+        phone: resident.phone || 'Not provided',
+        ward: resident.ward,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(resident.full_name)}&background=0D8ABC&color=fff`,
+        reportsSubmitted: resident.reports_submitted || 0,
+        votesCast: resident.votes_cast || 0,
+        status: resident.status === 'verified' ? 'active' : 'suspended',
+        joinedAt: resident.created_at,
+        lastActive: resident.created_at, // You might want to track this separately
+        engagementScore: resident.engagement_score || 0
+      }));
       
-      setResidents(mockResidents);
+      setResidents(residentsData);
       
       // Calculate stats
-      const total = mockResidents.length;
-      const active = mockResidents.filter(r => r.status === 'active').length;
-      const suspended = mockResidents.filter(r => r.status === 'suspended').length;
+      const total = residentsData.length;
+      const active = residentsData.filter(r => r.status === 'active').length;
+      const suspended = residentsData.filter(r => r.status === 'suspended').length;
       setStats({ total, active, suspended });
-    } catch (error) {
-      console.error('Error fetching residents:', error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching residents:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const applyFilters = () => {
     let filtered = [...residents];
@@ -170,9 +116,15 @@ const AdminResidentsPage: React.FC = () => {
     setFilters({ ward: '', status: '', search: '' });
   };
 
-  const handleStatusChange = async (resident: Resident, newStatus: 'active' | 'suspended') => {
-    try {
-      // Mock API call
+ const handleStatusChange = async (resident: Resident, newStatus: 'active' | 'suspended') => {
+  try {
+    // Convert frontend status to backend status
+    const backendStatus = newStatus === 'active' ? 'verified' : 'suspended';
+    
+    const response = await apiService.updateResidentStatus(resident.id, backendStatus);
+    
+    if (response.success) {
+      // Update local state
       setResidents(prev =>
         prev.map(r =>
           r.id === resident.id ? { ...r, status: newStatus } : r
@@ -187,11 +139,17 @@ const AdminResidentsPage: React.FC = () => {
       const active = updatedResidents.filter(r => r.status === 'active').length;
       const suspended = updatedResidents.filter(r => r.status === 'suspended').length;
       setStats(prev => ({ ...prev, active, suspended }));
-    } catch (error) {
-      console.error('Error updating resident status:', error);
+      
+      // Show success message
+      alert(`Resident ${newStatus === 'active' ? 'activated' : 'suspended'} successfully!`);
+    } else {
+      alert('Failed to update resident status: ' + response.message);
     }
-  };
-
+  } catch (error) {
+    console.error('Error updating resident status:', error);
+    alert('Error updating resident status');
+  }
+};
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',

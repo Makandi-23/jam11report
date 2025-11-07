@@ -1,34 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Mock users for testing - REMOVE when backend is integrated
-const MOCK_USERS = [
-  {
-    id: 1,
-    name: "Test Admin",
-    email: "admin@test.com",
-    password: "123456",
-    role: "admin" as const,
-    ward: "All Wards",
-    phone: "0700123456",
-    avatar: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop"
-  },
-  {
-    id: 2,
-    name: "Test Resident",
-    email: "resident@test.com",
-    password: "123456",
-    role: "resident" as const,
-    ward: "Lindi",
-    phone: "0700654321",
-    avatar: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop"
-  }
-];
-
-// Generate mock token - REMOVE when backend is integrated
-const generateMockToken = () => {
-  return 'mock_token_' + Math.random().toString(36).substr(2, 9);
-};
-
 interface User {
   id: number;
   name: string;
@@ -37,13 +8,16 @@ interface User {
   ward: string;
   phone?: string;
   avatar?: string;
+  full_name?: string;
+   status: 'verified' | 'suspended' | 'pending' | undefined ; 
+   department?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
+  register: (userData: any) => Promise<{ success: boolean; message: string }>; // ✅ Fixed return type
   logout: () => void;
   isLoading: boolean;
 }
@@ -76,7 +50,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
       } catch (error) {
-        // Clear corrupted data from localStorage
         localStorage.removeItem('jamiireport_token');
         localStorage.removeItem('jamiireport_user');
         setToken(null);
@@ -87,40 +60,79 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Mock authentication - REPLACE with real API call when backend is ready
-    const foundUser = MOCK_USERS.find(u => u.email === email && u.password === password);
-    
-    if (!foundUser) {
-      throw new Error('Invalid credentials');
-    }
+    try {
+      const response = await fetch('http://localhost/jam11report/backend/api/auth/login.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const mockToken = generateMockToken();
-    const { password: _, ...userWithoutPassword } = foundUser;
-    
-    setToken(mockToken);
-    setUser(userWithoutPassword);
-    
-    localStorage.setItem('jamiireport_token', mockToken);
-    localStorage.setItem('jamiireport_user', JSON.stringify(userWithoutPassword));
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      const backendUser = data.user;
+      const frontendUser: User = {
+        id: backendUser.id,
+        name: backendUser.full_name,
+        email: backendUser.email,
+        role: backendUser.role,
+        ward: backendUser.ward,
+        phone: backendUser.phone,
+        full_name: backendUser.full_name,
+        status: backendUser.status, 
+        department: backendUser.department,
+        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
+      };
+
+      const mockToken = 'real_backend_token_' + Math.random().toString(36).substr(2, 9);
+      
+      setToken(mockToken);
+      setUser(frontendUser);
+      
+      localStorage.setItem('jamiireport_token', mockToken);
+      localStorage.setItem('jamiireport_user', JSON.stringify(frontendUser));
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
-  const register = async (userData: any) => {
-    // Mock registration - REPLACE with real API call when backend is ready
-    const newUser = {
-      id: Date.now(),
-      ...userData,
-      role: 'resident' as const,
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-    };
-    
-    const mockToken = generateMockToken();
-    const { password: _, ...userWithoutPassword } = newUser;
-    
-    setToken(mockToken);
-    setUser(userWithoutPassword);
-    
-    localStorage.setItem('jamiireport_token', mockToken);
-    localStorage.setItem('jamiireport_user', JSON.stringify(userWithoutPassword));
+  const register = async (userData: any): Promise<{ success: boolean; message: string }> => { // ✅ Fixed return type
+    try {
+      const response = await fetch('http://localhost/jam11report/backend/api/auth/register.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          full_name: userData.name,
+          email: userData.email,
+          password: userData.password,
+          phone: userData.phone,
+          ward: userData.ward,
+          estate_street: userData.estateStreet || '',
+          proof_of_residence_path: userData.proofOfResidence || ''
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // ✅ Now this matches the return type
+      return { success: true, message: data.message };
+      
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {

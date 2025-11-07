@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, FileText, Plus, Phone, LogOut, User, Megaphone } from 'lucide-react';
+import { Menu, X, Home, FileText, Plus, Phone, LogOut, User, Megaphone, List } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../contexts/I18nContext';
 import LanguageToggle from './LanguageToggle';
+
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -21,7 +22,8 @@ const Header: React.FC = () => {
 
   const navItems = user ? [
     { to: user.role === 'admin' ? '/admin' : '/dashboard', label: t('nav.dashboard'), icon: Home },
-    { to: '/reports', label: 'My Reports', icon: FileText },
+    { to: '/reports', label: 'Reports', icon: FileText }, // All community reports
+    { to: '/my-reports', label: 'My Reports', icon: List }, // User's personal reports
     ...(user.role === 'resident' ? [{ to: '/report', label: t('nav.reportIssue'), icon: Plus }] : []),
     ...(user.role === 'resident' ? [{ to: '/announcements', label: 'Announcements', icon: Megaphone }] : []),
     { to: '/contact', label: 'Contact', icon: Phone },
@@ -30,7 +32,6 @@ const Header: React.FC = () => {
     { to: '/login', label: t('nav.login'), icon: User },
     { to: '/register', label: t('nav.register'), icon: Plus },
   ];
-
   const isActive = (path: string) => location.pathname === path;
 
   return (

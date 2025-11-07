@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard as Edit, Trash2, Archive, Pin, Calendar, AlertCircle, Info } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
-  getAnnouncements,
-  createAnnouncementDraft,
+  getAllAnnouncements,
+  createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
   archiveAnnouncement,
   Announcement
-} from '../services/mock/announcements';
+} from '../services/api/announcements';
+
+
+
 
 const wards = ['All', 'Lindi', 'Makina', 'Woodley/Kenyatta Golf Course', 'Sarang\'ombe', 'Laini Saba'];
 
 export default function AdminAnnouncementsPage() {
   const { t, language } = useI18n();
+   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -30,44 +35,110 @@ export default function AdminAnnouncementsPage() {
     expires_at: ''
   });
 
-  useEffect(() => {
+ useEffect(() => {
+    console.log('AuthContext user:', user);
+    console.log('User fields:', user ? Object.keys(user) : 'No user');
     fetchAnnouncements();
-  }, []);
+  }, [user]);
 
   const fetchAnnouncements = async () => {
-    try {
-      const data = await getAnnouncements({});
-      setAnnouncements(data);
-    } catch (error) {
-      console.error('Error fetching announcements:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const data = await getAllAnnouncements();
+    setAnnouncements(data);
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    // You might want to show a toast notification here
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      const payload = {
-        ...formData,
-        expires_at: formData.expires_at || null,
-        status: 'active' as const
-      };
-
-      if (editingId) {
-        await updateAnnouncement(editingId, payload);
-      } else {
-        await createAnnouncementDraft(payload);
+  try {
+      // Use user from AuthContext instead of localStorage
+      if (!user) {
+        throw new Error('Please log in to create announcements.');
       }
 
+      // Extract admin_id from the user object - try different possible field names
+     // If TypeScript is still complaining, you can use type assertion
+const admin_id = (user as any).id || (user as any).user_id || (user as any).adminId || (user as any).admin_id;
+      
+      console.log('User from AuthContext:', user);
+      console.log('Extracted admin_id:', admin_id);
+
+    if (!admin_id) {
+      throw new Error('User not authenticated or admin_id not found. Available fields: ' + JSON.stringify(user ? Object.keys(user) : 'No user data'));
+    }
+
+    const payload = {
+      title_en: formData.title_en,
+      title_sw: formData.title_sw,
+      message_en: formData.message_en,
+      message_sw: formData.message_sw,
+      category: formData.category,
+      ward_target: formData.ward_target,
+      is_pinned: formData.is_pinned,
+      expires_at: formData.expires_at || null,
+    };
+
+    console.log('Frontend payload:', payload);
+
+    // Test with simpler data structure first - ADD admin_id
+    const testData = {
+      admin_id: 1, // ← THIS IS THE MISSING FIELD
+      title_en: payload.title_en,
+      title_sw: payload.title_sw,
+      message_en: payload.message_en,
+      message_sw: payload.message_sw,
+      category: payload.category, // Send as-is without mapping
+      priority: payload.is_pinned ? 'pinned' : 'normal',
+      target_ward: payload.ward_target,
+      expires_at: payload.expires_at
+    };
+
+    console.log('Sending to backend:', testData);
+
+    const response = await fetch('http://localhost/jam11report/backend/api/announcements/create.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add your auth headers if needed
+      },
+      body: JSON.stringify(testData),
+    });
+
+    console.log('Response status:', response.status);
+    
+    const responseText = await response.text();
+    console.log('Raw response:', responseText);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${responseText}`);
+    }
+
+    const result = JSON.parse(responseText);
+    console.log('Parsed result:', result);
+
+    if (result.message === "Announcement was created successfully.") {
       resetForm();
       fetchAnnouncements();
-    } catch (error) {
-      console.error('Error saving announcement:', error);
+      alert('Announcement created successfully!');
+    } else {
+      throw new Error(result.message || 'Failed to create announcement');
     }
-  };
-
+  } catch (error) {
+    console.error('Error saving announcement:', error);
+    if (error instanceof Error) {
+      alert('Failed to save announcement: ' + error.message);
+    } else {
+      alert('Failed to save announcement: Unknown error occurred');
+    }
+  }
+};
   const handleEdit = (announcement: Announcement) => {
     setEditingId(announcement.id);
     setFormData({

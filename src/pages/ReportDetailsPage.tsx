@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useVote } from '../hooks/useVote';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import { Ban } from 'lucide-react';
 
 interface Report {
   id: number;
@@ -31,6 +32,7 @@ const ReportDetailsPage: React.FC = () => {
   const [report, setReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showVoteSuspendedAlert, setShowVoteSuspendedAlert] = useState(false);
 
   const categories = {
     security: { name: 'Security', icon: '🛡️', color: 'bg-red-100 text-red-700', illustration: '🚨' },
@@ -51,25 +53,59 @@ const ReportDetailsPage: React.FC = () => {
     }
   }, [id]);
 
-  const fetchReport = async (reportId: number) => {
-    try {
-      const response = await fetch(`/api/reports/${reportId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setReport(data);
-      } else {
-        navigate('/reports');
-      }
-    } catch (error) {
-      console.error('Error fetching report:', error);
+ const fetchReport = async (reportId: number) => {
+  try {
+    // First try to get from all reports (fallback)
+    const allResponse = await fetch('http://localhost/jam11report/backend/api/reports/all_reports.php');
+    const allData = await allResponse.json();
+    
+    // Find the specific report from all reports
+    const reportData = (allData.reports || []).find((report: any) => 
+      parseInt(report.id) === reportId
+    );
+    
+    if (reportData) {
+      // Map backend status to frontend status
+      const mapStatus = (backendStatus: string): 'pending' | 'in-progress' | 'resolved' => {
+        switch (backendStatus) {
+          case 'in_progress': return 'in-progress';
+          case 'resolved': return 'resolved';
+          default: return 'pending';
+        }
+      };
+      
+      const transformedReport = {
+        id: parseInt(reportData.id),
+        title: reportData.title,
+        description: reportData.description,
+        category: reportData.category.toLowerCase(),
+        ward: reportData.ward,
+        status: mapStatus(reportData.status), // Use REAL status from API
+        votes: parseInt(reportData.vote_count) || 0,
+        createdAt: reportData.created_at,
+        userId: 1, // You'll need to get this properly
+        photos: []
+      };
+      
+      setReport(transformedReport);
+    } else {
       navigate('/reports');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    navigate('/reports');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleVote = async () => {
     if (!report) return;
+
+     if (user?.status === 'suspended') {
+    setShowVoteSuspendedAlert(true);
+    return;
+  }
     try {
       await vote(report.id);
       setReport(prev => prev ? { ...prev, votes: prev.votes + 1 } : null);
@@ -311,6 +347,21 @@ const ReportDetailsPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Vote Suspension Alert */}
+{showVoteSuspendedAlert && (
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-4 flex items-center gap-3"
+  >
+    <Ban className="w-5 h-5 text-red-600 flex-shrink-0" />
+    <div>
+      <p className="text-red-800 font-medium text-sm">Cannot vote - Account suspended</p>
+      <p className="text-red-700 text-xs">You cannot vote on reports while your account is suspended.</p>
+    </div>
+  </motion.div>
+)}
+
                 {/* Admin Status Controls */}
                 {user && user.role === 'admin' && (
                   <div className="mt-6 pt-6 border-t border-gray-200">
@@ -422,7 +473,7 @@ const ReportDetailsPage: React.FC = () => {
         </motion.div>
       )}
 
-      <Footer />
+     <Footer variant="dashboard" />
     </div>
   );
 };

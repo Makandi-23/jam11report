@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Pin, Calendar, AlertCircle, Info, Filter, Megaphone, X } from 'lucide-react';
 import { useI18n } from '../contexts/I18nContext';
 import { useAuth } from '../contexts/AuthContext';
-import { getAnnouncements, markAsRead, Announcement } from '../services/mock/announcements';
+import { getAnnouncementsByWard, markAsRead, Announcement } from '../services/api/announcements';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 
@@ -26,42 +26,56 @@ export default function AnnouncementsPage() {
     filterAnnouncements();
   }, [announcements, categoryFilter, showUnreadOnly]);
 
-  const fetchAnnouncements = async () => {
-    try {
-      const data = await getAnnouncements({ status: 'active' });
-      setAnnouncements(data);
-    } catch (error) {
-      console.error('Error fetching announcements:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterAnnouncements = () => {
-    let filtered = [...announcements];
-
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(a => a.category === categoryFilter);
+ const fetchAnnouncements = async () => {
+  try {
+    setLoading(true);
+    console.log('🔍 User object:', user);
+    console.log('🔍 User ward:', user?.ward);
+    
+    if (!user?.ward) {
+      console.error('❌ User ward not available');
+      return;
     }
 
-    if (showUnreadOnly) {
-      filtered = filtered.filter(a => !a.isRead);
-    }
+    console.log('📡 Calling getAnnouncementsByWard with ward:', user.ward);
+    const data = await getAnnouncementsByWard(user.ward);
+    console.log('✅ Fetched announcements:', data);
+    console.log('📊 Number of announcements:', data.length);
+    
+    setAnnouncements(data);
+  } catch (error) {
+    console.error('❌ Error fetching announcements:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-    setFilteredAnnouncements(filtered);
-    setCurrentPage(1);
-  };
+ const filterAnnouncements = () => {
+  let filtered = [...announcements];
 
-  const handleMarkAsRead = async (announcementId: string) => {
-    try {
-      await markAsRead(announcementId, user?.id || 'guest');
-      setAnnouncements(prev =>
-        prev.map(a => a.id === announcementId ? { ...a, isRead: true } : a)
-      );
-    } catch (error) {
-      console.error('Error marking as read:', error);
-    }
-  };
+  // Filter by category
+  if (categoryFilter !== 'all') {
+    filtered = filtered.filter(a => a.category === categoryFilter);
+  }
+
+  // Filter by unread (using mock isRead property)
+  if (showUnreadOnly) {
+    filtered = filtered.filter(a => !a.isRead);
+  }
+
+  setFilteredAnnouncements(filtered);
+  setCurrentPage(1);
+};
+ const handleMarkAsRead = async (announcementId: string) => {
+  try {
+    await markAsRead(announcementId, user?.id?.toString() || 'guest');
+    setAnnouncements(prev =>
+      prev.map(a => a.id === announcementId ? { ...a, isRead: true } : a)
+    );
+  } catch (error) {
+    console.error('Error marking as read:', error);
+  }
+};
 
   const getCategoryIcon = (category: string) => {
     switch (category) {

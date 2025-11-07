@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useVote } from '../hooks/useVote';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import { Ban } from 'lucide-react';
 
 interface Report {
   id: number;
@@ -31,6 +32,10 @@ interface FilterState {
 
 const ReportsPage: React.FC = () => {
   const { user, token } = useAuth();
+
+   console.log('🔍 REPORTS PAGE - Current user status:', user?.status);
+  console.log('🔍 REPORTS PAGE - Full user object:', user);
+  
   const { vote, hasVoted, isVoting } = useVote();
   const [reports, setReports] = useState<Report[]>([]);
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
@@ -43,7 +48,7 @@ const ReportsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ pending: 0, inProgress: 0, resolved: 0 });
-
+const [showVoteSuspendedAlert, setShowVoteSuspendedAlert] = useState(false);
   const reportsPerPage = 6;
 
   const categories = [
@@ -61,6 +66,7 @@ const ReportsPage: React.FC = () => {
 
   const wards = ['Lindi', 'Laini Saba', 'Makina', 'Woodley/Kenyatta Golf Course', "Sarang'ombe"];
 
+
   useEffect(() => {
     fetchReports();
   }, []);
@@ -69,24 +75,85 @@ const ReportsPage: React.FC = () => {
     applyFilters();
   }, [reports, filters]);
 
-  const fetchReports = async () => {
-    try {
-      const response = await fetch('/api/reports');
-      const data = await response.json();
-      setReports(data.reports || []);
-      
-      // Calculate stats
-      const pending = data.reports?.filter((r: Report) => r.status === 'pending').length || 0;
-      const inProgress = data.reports?.filter((r: Report) => r.status === 'in-progress').length || 0;
-      const resolved = data.reports?.filter((r: Report) => r.status === 'resolved').length || 0;
-      setStats({ pending, inProgress, resolved });
-    } catch (error) {
-      console.error('Error fetching reports:', error);
-    } finally {
-      setIsLoading(false);
+const fetchReports = async () => {
+  try {
+    console.log('Starting to fetch reports...'); // Debug 1
+    
+    const response = await fetch('http://localhost/jam11report/backend/api/reports/all_reports.php?t=' + Date.now());
+    
+    console.log('Response status:', response.status); // Debug 2
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
-
+    
+    const data = await response.json();
+    console.log('Raw API data received:', data); // Debug 3
+    
+    if (!data.reports) {
+      console.log('No reports array in response:', data);
+      setReports([]);
+      return;
+    }
+    
+    // Transform data to match frontend format
+    const transformedReports = data.reports.map((report: any) => {
+      console.log('Processing report:', report.id, 'with status:', report.status); // Debug 4
+      
+      // Map backend status to frontend status
+      const mapStatus = (backendStatus: string): 'pending' | 'in-progress' | 'resolved' => {
+        console.log('Mapping status:', backendStatus); // Debug 5
+        switch (backendStatus) {
+          case 'in_progress': 
+            console.log('Mapped to in-progress');
+            return 'in-progress';
+          case 'resolved': 
+            console.log('Mapped to resolved');
+            return 'resolved';
+          default: 
+            console.log('Mapped to pending (default)');
+            return 'pending';
+        }
+      };
+      
+      const mappedStatus = mapStatus(report.status);
+      console.log('Final status for report', report.id, ':', mappedStatus); // Debug 6
+      
+      return {
+        id: parseInt(report.id),
+        title: report.title,
+        description: report.description,
+        category: report.category?.toLowerCase() || 'other',
+        ward: report.ward,
+        status: mappedStatus,
+        votes: parseInt(report.vote_count) || 0,
+        createdAt: report.created_at,
+        userId: 1
+      };
+    });
+    
+    console.log('All transformed reports:', transformedReports); // Debug 7
+    
+    setReports(transformedReports);
+    
+    // Calculate stats from REAL statuses
+    const pending = transformedReports.filter((r: Report) => r.status === 'pending').length;
+    const inProgress = transformedReports.filter((r: Report) => r.status === 'in-progress').length;
+    const resolved = transformedReports.filter((r: Report) => r.status === 'resolved').length;
+    
+    console.log('Final stats:', { pending, inProgress, resolved }); // Debug 8
+    
+    setStats({ pending, inProgress, resolved });
+    
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    // Set empty arrays on error
+    setReports([]);
+    setStats({ pending: 0, inProgress: 0, resolved: 0 });
+  } finally {
+    setIsLoading(false);
+  }
+};
   const applyFilters = () => {
     let filtered = [...reports];
 
@@ -117,14 +184,30 @@ const ReportsPage: React.FC = () => {
     setFilters({ category: '', status: '', search: '', ward: '' });
   };
 
-  const handleVote = async (reportId: number) => {
-    try {
-      await vote(reportId);
-      fetchReports();
-    } catch (error) {
-      console.error('Error voting:', error);
-    }
-  };
+const handleVote = async (reportId: number) => {
+  console.log('🚨🚨🚨 VOTE BUTTON CLICKED 🚨🚨🚨');
+  console.log('Current user:', user);
+  console.log('User status:', user?.status);
+  console.log('Is user suspended?', user?.status === 'suspended');
+  console.log('User object full:', JSON.stringify(user, null, 2));
+
+  // Check if user exists and is suspended
+  if (user && user.status === 'suspended') {
+    console.log('❌ BLOCKING VOTE - User is suspended!');
+    setShowVoteSuspendedAlert(true);
+    setTimeout(() => setShowVoteSuspendedAlert(false), 3000);
+    return;
+  }
+
+  console.log('✅ ALLOWING VOTE - User is not suspended');
+  
+  try {
+    await vote(reportId);
+    fetchReports();
+  } catch (error) {
+    console.error('Error voting:', error);
+  }
+};
 
   const getCategoryInfo = (categoryId: string) => {
     return categories.find(cat => cat.id === categoryId) || categories[3];
@@ -248,6 +331,22 @@ const ReportsPage: React.FC = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Vote Suspension Alert */}
+{showVoteSuspendedAlert && (
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3"
+  >
+    <Ban className="w-6 h-6 text-red-600 flex-shrink-0" />
+    <div>
+      <p className="text-red-800 font-medium">Cannot vote - Account suspended</p>
+      <p className="text-red-700 text-sm">You cannot vote on reports while your account is suspended.</p>
+    </div>
+  </motion.div>
+)}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Chart */}
@@ -426,7 +525,7 @@ const ReportsPage: React.FC = () => {
         </div>
       </main>
 
-      <Footer />
+      <Footer variant="dashboard" />
     </div>
   );
 };

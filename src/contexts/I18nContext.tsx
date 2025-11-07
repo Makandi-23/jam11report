@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface I18nContextType {
   language: 'en' | 'sw';
   setLanguage: (lang: 'en' | 'sw') => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string>) => string;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -236,8 +236,16 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     localStorage.setItem('jamiireport_lang', lang);
   };
 
+  // CORRECTED t function - placed inside the I18nProvider component
   const t = (key: string, params?: Record<string, string>) => {
-    let translation = translations[language][key] || key;
+    // Type-safe way to access translations
+    const langTranslations = translations[language];
+    let translation = key; // Default to key if not found
+    
+    // Check if the key exists in the translations
+    if (key in langTranslations) {
+      translation = langTranslations[key as keyof typeof langTranslations];
+    }
     
     if (params) {
       Object.keys(params).forEach(param => {

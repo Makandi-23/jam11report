@@ -1,0 +1,84 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Handle CORS preflight request
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    header("Access-Control-Allow-Origin: http://localhost:5173");
+    header("Access-Control-Allow-Methods: PUT, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Credentials: true");
+    http_response_code(200);
+    exit(0);
+}
+
+// Set CORS headers for actual request
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: PUT");
+header("Access-Control-Max-Age: 3600");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Credentials: true");
+
+include_once '../../config/database.php';
+
+$database = new Database();
+$db = $database->getConnection();
+
+// Get the raw input
+$input = file_get_contents("php://input");
+$data = json_decode($input);
+
+// Log for debugging
+error_log("Assign Department Request: " . print_r($data, true));
+
+if(!empty($data->id) && !empty($data->department)) {
+    try {
+        // Update the report with department assignment
+        $query = "UPDATE reports 
+                  SET status = 'assigned', 
+                      assigned_department = :department,
+                      admin_notes = :notes,
+                      updated_at = NOW()
+                  WHERE id = :id";
+        
+        $stmt = $db->prepare($query);
+        
+        $notes = $data->notes ?? '';
+        
+        $stmt->bindParam(':department', $data->department);
+        $stmt->bindParam(':notes', $notes);
+        $stmt->bindParam(':id', $data->id);
+        
+        if($stmt->execute()) {
+            http_response_code(200);
+            echo json_encode(array(
+                "success" => true,
+                "message" => "Report assigned to department successfully.",
+                "assigned_department" => $data->department,
+                "status" => "assigned"
+            ));
+        } else {
+            http_response_code(503);
+            echo json_encode(array(
+                "success" => false,
+                "message" => "Unable to assign report."
+            ));
+        }
+        
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(array(
+            "success" => false,
+            "message" => "Error: " . $e->getMessage()
+        ));
+    }
+} else {
+    http_response_code(400);
+    echo json_encode(array(
+        "success" => false,
+        "message" => "Unable to assign. Data is incomplete.",
+        "received_data" => $data
+    ));
+}
+?>

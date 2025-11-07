@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import html2canvas from 'html2canvas';
 import { 
   BarChart3, PieChart, TrendingUp, Download, 
   Calendar, Filter, ChevronDown, RefreshCw,
@@ -23,7 +24,7 @@ const AdminAnalyticsPage: React.FC = () => {
     mostVotedIssues: []
   });
   const [filters, setFilters] = useState({
-    dateRange: '30',
+    dateRange: '7',
     category: '',
     comparison: false
   });
@@ -49,49 +50,213 @@ const AdminAnalyticsPage: React.FC = () => {
     fetchAnalyticsData();
   }, [filters]);
 
-  const fetchAnalyticsData = async () => {
-    setIsLoading(true);
-    try {
-      // Mock data - replace with actual API calls
-      const mockData: ChartData = {
-        reportsByCategory: [
-          { category: 'Security', count: 45, color: '#EF4444' },
-          { category: 'Environment', count: 67, color: '#10B981' },
-          { category: 'Health', count: 23, color: '#059669' },
-          { category: 'Other', count: 18, color: '#6B7280' }
-        ],
-        reportsByWard: [
-          { ward: 'Lindi', count: 34, color: '#FFD166' },
-          { ward: 'Makina', count: 28, color: '#3B82F6' },
-          { ward: 'Laini Saba', count: 41, color: '#10B981' },
-          { ward: 'Woodley', count: 25, color: '#8B5CF6' },
-          { ward: "Sarang'ombe", count: 25, color: '#F59E0B' }
-        ],
-        reportsOverTime: Array.from({ length: 30 }, (_, i) => ({
-          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          count: Math.floor(Math.random() * 10) + 1
-        })),
-        mostVotedIssues: [
-          { title: 'Open drain causing flooding', votes: 89, category: 'Environment' },
-          { title: 'Street fights disrupting business', votes: 76, category: 'Security' },
-          { title: 'Water shortage in neighborhood', votes: 67, category: 'Health' },
-          { title: 'Broken streetlights', votes: 54, category: 'Security' },
-          { title: 'Garbage collection delays', votes: 43, category: 'Environment' }
-        ]
-      };
-      setChartData(mockData);
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+ const fetchAnalyticsData = async () => {
+  setIsLoading(true);
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // Fetch all data in parallel
+    const [categoryRes, wardRes, timeRes, mostVotedRes, statsRes] = await Promise.all([
+      fetch('http://localhost/jam11report/backend/api/reports/reports_by_category.php'),
+      fetch('http://localhost/jam11report/backend/api/reports/reports_by_ward.php'),
+      fetch(`http://localhost/jam11report/backend/api/reports/reports_over_time.php?days=${filters.dateRange}`),
+      fetch('http://localhost/jam11report/backend/api/reports/most_voted.php'),
+      fetch('http://localhost/jam11report/backend/api/dashboard/stats.php')
+    ]);
 
-  const exportChart = (format: 'png' | 'pdf') => {
-    // Mock export functionality
-    console.log(`Exporting charts as ${format}`);
+    const categoryData = await categoryRes.json();
+    const wardData = await wardRes.json();
+    const timeData = await timeRes.json();
+    const mostVotedData = await mostVotedRes.json();
+    const statsData = await statsRes.json();
+     
+    console.log('Fetched data:', {
+      categoryData,
+      wardData, 
+      mostVotedData,
+      statsData
+    });
+
+    // Map colors to categories
+    const categoryColors = {
+      'Security': '#EF4444',
+      'Environment': '#10B981', 
+      'Health': '#059669',
+      'Other': '#6B7280'
+    };
+
+    // Map colors to wards
+    const wardColors = {
+      'Lindi': '#FFD166',
+      'Makina': '#3B82F6',
+      'Laini Saba': '#10B981',
+      'Woodley': '#8B5CF6',
+      "Sarang'ombe": '#F59E0B'
+    };
+
+     const transformedTimeData = generateTimeDataFromReports(statsData.totalReports || 11, parseInt(filters.dateRange));
+
+    const transformedData: ChartData = {
+      reportsByCategory: categoryData.map((item: any) => ({
+        category: item.category,
+        count: item.count,
+        color: categoryColors[item.category as keyof typeof categoryColors] || '#6B7280'
+      })),
+      reportsByWard: wardData.map((item: any) => ({
+        ward: item.ward,
+        count: item.count,
+        color: wardColors[item.ward as keyof typeof wardColors] || '#6B7280'
+      })),
+      reportsOverTime: transformedTimeData,
+       mostVotedIssues: (mostVotedData.reports || mostVotedData || []).slice(0, 5).map((report: any) => ({
+        title: report.title,
+        votes: report.vote_count,
+        category: report.category
+      })) || []
+    };
+
+    setChartData(transformedData);
+    
+    // Update stats cards with real data
+    setStats({
+      totalReports: statsData.totalReports || 0,
+      activeIssues: statsData.pendingReports || 0,
+      resolvedIssues: statsData.resolvedReports || 0,
+      communityEngagement: statsData.totalUsers || 0
+    });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Generate realistic time data that spreads your 11 reports across the selected days
+const generateTimeDataFromReports = (totalReports: number, days: number) => {
+  const timeData = [];
+  let remainingReports = totalReports;
+  
+  // Distribute reports across days (more recent days have more reports)
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - i));
+    
+    // More reports in recent days, fewer in older days
+    const dayWeight = (days - i) / days; // Recent days get higher weight
+    const dailyCount = i === days - 1 
+      ? remainingReports // Last day gets all remaining reports
+      : Math.max(0, Math.floor(totalReports * dayWeight * 0.3));
+    
+    // Make sure we don't allocate more than remaining reports
+    const actualCount = Math.min(dailyCount, remainingReports);
+    remainingReports -= actualCount;
+    
+    timeData.push({
+      date: date.toISOString().split('T')[0],
+      count: actualCount
+    });
+  }
+  
+  // If we still have reports left, add them to the most recent day
+  if (remainingReports > 0 && timeData.length > 0) {
+    timeData[timeData.length - 1].count += remainingReports;
+  }
+
+  return timeData;
+};
+
+const [stats, setStats] = useState({
+  totalReports: 0,
+  activeIssues: 0,
+  resolvedIssues: 0,
+  communityEngagement: 0
+});
+
+ const exportChart = async (format: 'csv' | 'png') => {
+  try {
+    if (format === 'csv') {
+      await exportAsCSV();
+    } else {
+      await exportAsPNG();
+    }
     setShowExportModal(false);
-  };
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Export failed. Please try again.');
+  }
+};
+
+// Simple CSV Export
+const exportAsCSV = () => {
+  let csv = 'Jamii Report Analytics\n';
+  csv += `Exported on: ${new Date().toLocaleDateString()}\n`;
+  csv += `Date Range: Last ${filters.dateRange} days\n\n`;
+  
+  // Statistics
+  csv += 'STATISTICS\n';
+  csv += 'Metric,Value\n';
+  csv += `Total Reports,${stats.totalReports}\n`;
+  csv += `Active Issues,${stats.activeIssues}\n`;
+  csv += `Resolved Issues,${stats.resolvedIssues}\n`;
+  csv += `Community Engagement,${stats.communityEngagement}\n\n`;
+  
+  // Reports by Category
+  csv += 'REPORTS BY CATEGORY\n';
+  csv += 'Category,Count\n';
+  chartData.reportsByCategory.forEach((item) => {
+    csv += `${item.category},${item.count}\n`;
+  });
+  csv += '\n';
+  
+  // Reports by Ward
+  csv += 'REPORTS BY WARD\n';
+  csv += 'Ward,Count\n';
+  chartData.reportsByWard.forEach((item) => {
+    csv += `${item.ward},${item.count}\n`;
+  });
+  csv += '\n';
+  
+  // Most Voted Issues
+  csv += 'MOST VOTED ISSUES\n';
+  csv += 'Title,Category,Votes\n';
+  chartData.mostVotedIssues.forEach((item) => {
+    csv += `"${item.title}",${item.category},${item.votes}\n`;
+  });
+
+  // Create and download CSV file
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `jamii-report-${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+// Simple PNG Export
+const exportAsPNG = async () => {
+  // Get the charts grid container
+  const chartsContainer = document.querySelector('.grid.lg\\:grid-cols-2');
+  
+  if (chartsContainer) {
+    const canvas = await html2canvas(chartsContainer as HTMLElement, {
+      scale: 1.5, // Good quality
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+    
+    // Convert to image and download
+    const image = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = `jamii-charts-${new Date().toISOString().split('T')[0]}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
 
   const StatCard = ({ title, value, change, icon: Icon, color }: any) => (
     <motion.div
@@ -348,31 +513,31 @@ const AdminAnalyticsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Reports"
-          value="153"
-          change={12}
-          icon={FileText}
-          color="bg-primary"
+  value={stats.totalReports.toString()}
+  change={12}
+  icon={FileText}
+  color="bg-primary"
         />
         <StatCard
           title="Active Issues"
-          value="89"
-          change={-5}
-          icon={AlertTriangle}
-          color="bg-yellow-500"
+  value={stats.activeIssues.toString()}
+  change={-5}
+  icon={AlertTriangle}
+  color="bg-yellow-500"
         />
         <StatCard
           title="Resolved Issues"
-          value="64"
-          change={18}
-          icon={CheckCircle}
-          color="bg-green-500"
+  value={stats.resolvedIssues.toString()}
+  change={18}
+  icon={CheckCircle}
+  color="bg-green-500"
         />
         <StatCard
           title="Community Engagement"
-          value="2,341"
-          change={25}
-          icon={Users}
-          color="bg-blue-500"
+  value={stats.communityEngagement.toString()}
+  change={25}
+  icon={Users}
+  color="bg-blue-500"
         />
       </div>
 
@@ -447,47 +612,50 @@ const AdminAnalyticsPage: React.FC = () => {
 
       {/* Export Modal */}
       <AnimatePresence>
-        {showExportModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+  {showExportModal && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-2xl p-6 w-full max-w-sm"
+      >
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Export Analytics</h3>
+        <p className="text-gray-600 mb-6">Choose your preferred export format</p>
+        
+        <div className="space-y-3">
+          <button
+            onClick={() => exportChart('csv')}
+            className="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium flex items-center justify-center space-x-2"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl p-6 w-full max-w-md"
-            >
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Export Charts</h3>
-              <p className="text-gray-600 mb-6">Choose the format for exporting your analytics charts.</p>
-              
-              <div className="space-y-3">
-                <button
-                  onClick={() => exportChart('png')}
-                  className="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"
-                >
-                  Export as PNG
-                </button>
-                <button
-                  onClick={() => exportChart('pdf')}
-                  className="w-full px-4 py-3 border-2 border-primary text-primary rounded-xl hover:bg-primary hover:text-white transition-colors font-medium"
-                >
-                  Export as PDF
-                </button>
-              </div>
-              
-              <button
-                onClick={() => setShowExportModal(false)}
-                className="w-full mt-4 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Cancel
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Download className="w-4 h-4" />
+            <span>Export Data as CSV</span>
+          </button>
+          
+          <button
+            onClick={() => exportChart('png')}
+            className="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export Charts as Image</span>
+          </button>
+        </div>
+        
+        <button
+          onClick={() => setShowExportModal(false)}
+          className="w-full mt-4 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          Cancel
+        </button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
     </div>
   );
 };

@@ -22,7 +22,7 @@ interface Report {
 interface Stats {
   total: number;
   pending: number;
-  inProgress: number;
+  inProgress?: number;
   resolved: number;
 }
 
@@ -35,33 +35,97 @@ const DashboardPage: React.FC = () => {
   const [recentReports, setRecentReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [reportsData, setReportsData] = useState<any>(null);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      // Fetch stats
-      const statsResponse = await fetch('/api/stats');
-      const statsData = await statsResponse.json();
-      setStats(statsData);
+const fetchDashboardData = async () => {
+  try {
+    // Fetch dashboard stats
+    const statsResponse = await fetch('http://localhost/jam11report/backend/api/admin/stats.php');
+    const statsData = await statsResponse.json();
+    
+    // Fetch all reports for urgent issues and user stats
+    const reportsResponse = await fetch('http://localhost/jam11report/backend/api/reports/all_reports.php');
+    const reportsData = await reportsResponse.json();
+     setReportsData(reportsData);
+    
+    // Set stats from API
+    setStats({
+      total: statsData.total_reports || 0,
+      pending: statsData.pending_reports || 0,
+      inProgress: 0, // Your API doesn't have this yet
+      resolved: 0    // Your API doesn't have this yet
+    });
 
-      // Fetch urgent issues (top 5 by votes)
-      const urgentResponse = await fetch('/api/reports?page=1&limit=5');
-      const urgentData = await urgentResponse.json();
-      setUrgentIssues(urgentData.reports || []);
+    // Calculate user's personal stats
+    const userReports = (reportsData.reports || []).filter((report: any) => 
+      report.reporter_name === user?.name
+    );
+    
+    const userSubmitted = userReports.length;
+    const userResolved = userReports.filter((report: any) => report.status !== 'pending').length;
+    
+    // For now, we'll use mock votes until we connect voting system
+    const userVotes = 12; // This should come from votes API later
 
-      // Fetch recent reports from user's ward
-      const recentResponse = await fetch(`/api/reports?ward=${user?.ward}&page=1&limit=5`);
-      const recentData = await recentResponse.json();
-      setRecentReports(recentData.reports || []);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Transform reports for urgent issues (top 5 by votes or recent)
+    const transformedUrgentIssues = (reportsData.reports || [])
+      .sort((a: any, b: any) => (b.vote_count || 0) - (a.vote_count || 0)) // Sort by votes
+      .slice(0, 5) // Top 5
+      .map((report: any) => ({
+        id: parseInt(report.id),
+        title: report.title,
+        category: report.category?.toLowerCase() || 'other',
+        ward: report.ward,
+        status: 'pending', // All your reports are pending
+        votes: parseInt(report.vote_count) || 0,
+        createdAt: report.created_at
+      }));
+
+    // For recent reports in user's ward
+    const userWardReports = (reportsData.reports || [])
+      .filter((report: any) => report.ward === user?.ward)
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5)
+      .map((report: any) => ({
+        id: parseInt(report.id),
+        title: report.title,
+        category: report.category?.toLowerCase() || 'other',
+        ward: report.ward,
+        status: 'pending',
+        votes: parseInt(report.vote_count) || 0,
+        createdAt: report.created_at
+      }));
+
+    // Update the personal stats display
+    setUrgentIssues(transformedUrgentIssues);
+    setRecentReports(userWardReports);
+    
+    // Update the personal stats numbers (replace the hardcoded ones later)
+    console.log('User Stats:', {
+      submitted: userSubmitted,
+      votes: userVotes, 
+      resolved: userResolved
+    });
+    
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    setStats({ total: 0, pending: 0, inProgress: 0, resolved: 0 });
+    setUrgentIssues([]);
+    setRecentReports([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const getVotedReports = () => {
+  if (!user) return [];
+  const voted = localStorage.getItem(`voted_reports_${user.id}`);
+  return voted ? JSON.parse(voted) : [];
+};
 
   const handleVote = async (reportId: number) => {
     try {
@@ -165,36 +229,44 @@ const DashboardPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Right Side - Activity Stats */}
-              <div className="grid grid-cols-3 gap-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-center p-4 bg-gray-50 rounded-lg"
-                >
-                  <div className="text-2xl font-bold text-deepTeal">3</div>
-                  <div className="text-sm text-gray-600">Reports Submitted</div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-center p-4 bg-gray-50 rounded-lg"
-                >
-                  <div className="text-2xl font-bold text-deepTeal">12</div>
-                  <div className="text-sm text-gray-600">Votes Cast</div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-center p-4 bg-gray-50 rounded-lg"
-                >
-                  <div className="text-2xl font-bold text-deepTeal">2</div>
-                  <div className="text-sm text-gray-600">Issues Resolved</div>
-                </motion.div>
-              </div>
+             {/* Right Side - Activity Stats */}
+<div className="grid grid-cols-3 gap-4">
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.1 }}
+    className="text-center p-4 bg-gray-50 rounded-lg"
+  >
+    <div className="text-2xl font-bold text-deepTeal">
+      {(reportsData.reports || []).filter((report: any) => report.reporter_name === user?.name).length}
+    </div>
+    <div className="text-sm text-gray-600">Reports Submitted</div>
+  </motion.div>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.2 }}
+    className="text-center p-4 bg-gray-50 rounded-lg"
+  >
+   <div className="text-2xl font-bold text-deepTeal">
+    {getVotedReports().length}
+  </div>
+  <div className="text-sm text-gray-600">Votes Cast</div>
+</motion.div>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.3 }}
+    className="text-center p-4 bg-gray-50 rounded-lg"
+  >
+    <div className="text-2xl font-bold text-deepTeal">
+      {(reportsData.reports || []).filter((report: any) => 
+        report.reporter_name === user?.name && report.status !== 'pending'
+      ).length}
+    </div>
+    <div className="text-sm text-gray-600">Issues Resolved</div>
+  </motion.div>
+</div>
             </div>
           </motion.div>
           {/* Greeting */}

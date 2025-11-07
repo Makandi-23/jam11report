@@ -10,6 +10,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../contexts/I18nContext';
 import LanguageToggle from './LanguageToggle';
 
+
+
 const AdminLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -18,15 +20,26 @@ const AdminLayout: React.FC = () => {
   const { t } = useI18n();
   const location = useLocation();
 
-  const navItems = [
+  // 🆕 SIMPLIFIED NAVIGATION BASED ON USER TYPE
+  const isSuperAdmin = user?.department === 'all';
+  const isDepartmentAdmin = user?.department && user.department !== 'all';
+  const userDepartment = user?.department || '';
+
+  // 🆕 SUPER ADMIN NAVIGATION (Full access)
+  const superAdminItems = [
     { to: '/admin', label: 'Dashboard', icon: Home },
     { to: '/admin/reports', label: 'Reports', icon: FileText },
     { to: '/admin/urgent', label: 'Urgent Issues', icon: AlertTriangle },
-    { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/admin/map', label: 'Ward Insights', icon: Map },
     { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { to: '/admin/residents', label: 'Residents', icon: Users },
+    { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/admin/settings', label: 'Settings', icon: Settings },
+  ];
+
+  // 🆕 DEPARTMENT ADMIN NAVIGATION (Minimal - Only My Department)
+  const departmentAdminItems = [
+    { to: '/admin/department', label: 'My Department', icon: Users },
   ];
 
   const isActive = (path: string) => {
@@ -44,7 +57,7 @@ const AdminLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header - Keep this the same */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-primary shadow-lg">
         <div className="flex items-center justify-between h-16 px-4">
           {/* Left - Logo & Menu */}
@@ -61,7 +74,7 @@ const AdminLayout: React.FC = () => {
               </motion.div>
             </button>
             
-            <Link to="/admin" className="flex items-center space-x-3">
+            <Link to={isSuperAdmin ? "/admin" : "/admin/department"} className="flex items-center space-x-3">
               <motion.div 
                 className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"
                 whileHover={{ scale: 1.05 }}
@@ -75,73 +88,95 @@ const AdminLayout: React.FC = () => {
             </Link>
           </div>
 
-          {/* Right - Language Toggle, Notifications, Profile */}
+          {/* Right - User Info Only (No Settings/Profile) */}
           <div className="flex items-center space-x-4">
-            <LanguageToggle />
+            {/* 🆕 SIMPLIFIED HEADER FOR DEPARTMENT ADMINS */}
+            {isDepartmentAdmin && (
+              <div className="text-white text-sm">
+                <div className="font-medium">{user?.name}</div>
+                <div className="text-white/80 capitalize">{userDepartment} Department</div>
+              </div>
+            )}
             
-            {/* Notification Bell */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-            </motion.button>
-            
-            {/* Profile Dropdown */}
-            <div className="relative">
-              <motion.button
-                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="flex items-center space-x-3 p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <img
-                  src={user?.avatar || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'}
-                  alt={user?.name}
-                  className="w-8 h-8 rounded-full object-cover border-2 border-white/20"
-                />
-                <span className="hidden sm:block font-medium">{user?.name}</span>
-              </motion.button>
-
-              <AnimatePresence>
-                {showProfileDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2"
+            {/* 🆕 SUPER ADMIN KEEPS FULL HEADER FEATURES */}
+            {isSuperAdmin && (
+              <>
+                <LanguageToggle />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
+                >
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                </motion.button>
+                
+                {/* Profile Dropdown - Only for Super Admin */}
+                <div className="relative">
+                  <motion.button
+                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    className="flex items-center space-x-3 p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <Link
-                      to="/admin/profile"
-                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => setShowProfileDropdown(false)}
-                    >
-                      <User className="w-4 h-4 mr-3" />
-                      Profile
-                    </Link>
-                    <Link
-                      to="/admin/settings"
-                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => setShowProfileDropdown(false)}
-                    >
-                      <Settings className="w-4 h-4 mr-3" />
-                      Settings
-                    </Link>
-                    <hr className="my-2" />
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <LogOut className="w-4 h-4 mr-3" />
-                      Logout
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    <img
+                      src={user?.avatar || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'}
+                      alt={user?.name}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-white/20"
+                    />
+                    <span className="hidden sm:block font-medium">{user?.name}</span>
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showProfileDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2"
+                      >
+                        <Link
+                          to="/admin/profile"
+                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setShowProfileDropdown(false)}
+                        >
+                          <User className="w-4 h-4 mr-3" />
+                          Profile
+                        </Link>
+                        <Link
+                          to="/admin/settings"
+                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setShowProfileDropdown(false)}
+                        >
+                          <Settings className="w-4 h-4 mr-3" />
+                          Settings
+                        </Link>
+                        <hr className="my-2" />
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Logout
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            )}
+            
+            {/* 🆕 SIMPLE LOGOUT FOR DEPARTMENT ADMINS */}
+            {isDepartmentAdmin && (
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -157,7 +192,34 @@ const AdminLayout: React.FC = () => {
         transition={{ duration: 0.3 }}
       >
         <nav className="p-4 space-y-2 h-full flex flex-col">
-          {navItems.map((item) => {
+          {/* 🆕 SUPER ADMIN NAVIGATION */}
+          {isSuperAdmin && superAdminItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.to);
+            
+            return (
+              <motion.div key={item.to} whileHover={{ x: 2 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  to={item.to}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group ${
+                    active
+                      ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-primary'
+                  }`}
+                  title={isSidebarCollapsed ? item.label : ''}
+                >
+                  <Icon className={`w-5 h-5 ${active ? 'text-white' : 'text-gray-500 group-hover:text-primary'}`} />
+                  {!isSidebarCollapsed && (
+                    <span className="font-semibold tracking-wide">{item.label}</span>
+                  )}
+                </Link>
+              </motion.div>
+            );
+          })}
+
+          {/* 🆕 DEPARTMENT ADMIN NAVIGATION (Only My Department) */}
+          {isDepartmentAdmin && departmentAdminItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.to);
             
@@ -182,17 +244,19 @@ const AdminLayout: React.FC = () => {
             );
           })}
           
-          {/* Collapse Toggle */}
-          <div className="mt-auto pt-4">
-            <motion.button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="hidden lg:flex items-center justify-center w-full p-3 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors duration-200"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {isSidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-            </motion.button>
-          </div>
+          {/* Collapse Toggle - Only for Super Admin */}
+          {isSuperAdmin && (
+            <div className="mt-auto pt-4">
+              <motion.button
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="hidden lg:flex items-center justify-center w-full p-3 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors duration-200"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {isSidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+              </motion.button>
+            </div>
+          )}
         </nav>
       </motion.aside>
 
